@@ -20,7 +20,7 @@ def read_file(input_file, var_name, time_index=0):
     '''
 
     fileid = netCDF4.Dataset(input_file, mode='r')
-    variable = fileid.variables[var_name][time_index,0,:, :]
+    variable = fileid.variables[var_name][time_index,:, :]
     fileid.close()
 
     return variable

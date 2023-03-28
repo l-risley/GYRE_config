@@ -26,11 +26,9 @@ def geostrophic_balance_D(eta : np.ndarray, vel : str, lat, dz):
             dz, spatial grid length (either dy or dx)
     Output: u/v, the horizontal velocity vector
     """
-    #TODO: lat will need to be adjusted for u and v!!
-
-    # eta is size (ny, nx), eta_new will be (ny+2, nx+2)
+     # eta is size (ny, nx), eta_new will be (ny+2, nx+2)
     ny, nx = np.shape(eta)
-    f_0, g, beta = param['f_0'], param['g'], param['beta']
+    f_0, g, beta = f0_calc(), param['g'], beta_calc()
     if vel == 'u':
         dy = dz
         # interpolate eta to v grid
@@ -42,7 +40,7 @@ def geostrophic_balance_D(eta : np.ndarray, vel : str, lat, dz):
         # interp to the u grid
         dndy_ugrid = interp_zonal(dndy)
         dndy_ugrid[:, [0, -1]] = 0
-        cor = f_0 + beta * lat
+        cor = f_0 + beta * lat[:-1, :]
         return - g * np.divide(dndy_ugrid, cor)
 
     elif vel == 'v':
@@ -58,6 +56,6 @@ def geostrophic_balance_D(eta : np.ndarray, vel : str, lat, dz):
         dndx_vgrid[[0, -1], :] = 0
 
         # calculate the coriolis term on v-grid
-        cor = f_0 + beta * lat
+        cor = f_0 + beta * lat[:,1:]
         return g * np.divide(dndx_vgrid, cor)
 

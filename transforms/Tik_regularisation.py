@@ -5,6 +5,7 @@ horizontal velocity vectors, Li et al 2005.
 """
 
 import numpy as np
+import numpy.ma as ma
 from scipy.optimize import minimize, fmin_cg
 from scipy.sparse.linalg import LinearOperator, cg
 from numpy.linalg import norm
@@ -154,7 +155,7 @@ def min_method(fn, grad, x0: np.ndarray, conv):
         return ans, all_fn, all_grad
 
 
-def tik_reg(alpha, u, v, dy, dx, ny, nx, conv):
+def tik_reg(alpha, u, v, dy, dx, ny, nx, conv=None):
     """
     Tikhonov's regularisation to find the horizontal velocity vectors from streamfunction and velocity potential
     Inputs: alpha, regularisation parameter
@@ -168,15 +169,26 @@ def tik_reg(alpha, u, v, dy, dx, ny, nx, conv):
     """
 
     # put u and v into a vector
-    b = np.append(u.flatten(), v.flatten())
-
+    #print(u)
+    u.set_fill_value(0)
+    v.set_fill_value(0)
+    #print(u.get_fill_value())
+    #print(u.view(ma.MaskedArray))
+    #print(type(u))
+    #print(v)
+    #print(u.flatten())
+    #print(v.flatten())
+    b = ma.append(u.flatten(), v.flatten())
+    #print(b)
+    #print(b[200:300])
+    #print(b[400:450])
     # input x is a vector
     # costfunction
     def tik_fun(x):
         # J_a = 0.5* (b-Ax)^T(b-Ax) + a*0.5*x^Tx
         J_x = b - A_operator(x, dy, dx, ny, nx)
-        J = np.dot(J_x, J_x)
-        J_reg = alpha * np.dot(x, x)
+        J = ma.dot(J_x, J_x)
+        J_reg = alpha * ma.dot(x, x)
         return 0.5 * (J + J_reg)
 
     # gradient
@@ -192,7 +204,12 @@ def tik_reg(alpha, u, v, dy, dx, ny, nx, conv):
     ny_cv, nx_cv = ny + 2, nx + 2
 
     # initial guess for minimisation
-    x_0 = np.zeros(2*ny_cv*nx_cv)
+    #x_0 = np.zeros(2*ny_cv*nx_cv)
+    x_0 = 100*np.ones(2*ny_cv*nx_cv)
+    cf = tik_fun(x_0)
+    print(cf)
+    gcf = tik_grad(x_0)
+    print(gcf)
 
     result = min_method(tik_fun, tik_grad, x_0, conv)  # use pre-defined fn to optimise
 

@@ -2,6 +2,8 @@
 General functions needed for the transforms and correlation analysis.
 
 """
+
+import matplotlib.pyplot as plt
 import numpy as np
 
 def dzdx(z, dx: int):
@@ -55,3 +57,22 @@ def outside_boundary(z: np.ndarray, location: str):
     elif location == 'nesw':
         z_new = np.c_[np.zeros(np.shape(z)[0]), z, np.zeros(np.shape(z)[0])]
         return np.r_[[np.zeros(np.shape(z_new)[1])], z_new, [np.zeros(np.shape(z_new)[1])]]
+
+
+def contour(x, y, z, plot_of: str, variable_name: str):
+    # 2D contour plot of one variable
+    # switch coords from m to km
+    plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')
+    # ax = sns.heatmap(z, cmap = 'ocean')
+    plt.xlabel('Longitude ($^\circ$)')
+    plt.ylabel('Lattitude ($^\circ$)')
+    plt.title(f'{variable_name} - {plot_of}')
+    if variable_name == 'Elevation':
+        units = '$m$'
+    elif variable_name == 'SF' or variable_name == 'VP':
+        units = '$m^2 s^{-1}$'
+    else:
+        units = '$ms^{-1}$'
+    plt.colorbar(label=f'{variable_name} ({units})')
+    plt.savefig(f'gyre{plot_of}{variable_name}.png')
+    plt.show()

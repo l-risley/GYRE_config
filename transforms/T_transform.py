@@ -8,7 +8,7 @@ from transforms.balance import *
 from transforms.U_transform import *
 from transforms.Tik_regularisation import *
 
-def T_transform(d_eta, du, dv, dx, dy, lat, alpha):
+def T_transform(d_eta, du, dv, dx, dy, lat_u, lat_v, alpha):
     """
     T-transform from model variables (elevation, zonal velocity and meridional velocity) to control variables
     (elevation, unbalanced streamfunction and unbalanced velocity
@@ -29,8 +29,8 @@ def T_transform(d_eta, du, dv, dx, dy, lat, alpha):
     # number of eta points on the grid
     ny, nx = np.shape(d_eta)
     # Use geostrophic balance to find the balanced velocities
-    du_b = geostrophic_balance_D(d_eta, 'u', lat, dy)
-    dv_b = geostrophic_balance_D(d_eta, 'v', lat, dx)
+    du_b = geostrophic_balance_D(d_eta, 'u', lat_u, dy)
+    dv_b = geostrophic_balance_D(d_eta, 'v', lat_v, dx)
 
     # Find the unbalanced components of the velocities
     du_u = du - du_b

@@ -31,10 +31,10 @@ def vel_from_helm(sf, vp, dx, dy):
     v_vp = 1 / dy * (vp[1:, 1:-1] - vp[:-1, 1:-1])
     # find v
     v = v_sf + v_vp
-    u, v = zonal_boundary(u), meridional_boundary(v)
+    #u, v = zonal_boundary(u), meridional_boundary(v)
     return u, v
 
-def U_transform(d_eta, sf_u, vp_u, du_mean, dv_mean, dx, dy, lat):
+def U_transform(d_eta, sf_u, vp_u, du_mean, dv_mean, dx, dy, u_lat, v_lat):
     """
     The U-transform from control variables (elevation, unbalanced streamfunction and unbalanced velocity
     potential) to model variables (elevation, zonal velocity and meridional velocity).
@@ -52,14 +52,14 @@ def U_transform(d_eta, sf_u, vp_u, du_mean, dv_mean, dx, dy, lat):
     du_u, dv_u = vel_from_helm(sf_u, vp_u, dx, dy)
 
     # Use geostrophic balance to find the balanced velocities
-    du_b = geostrophic_balance_D(d_eta, 'u', lat, dy)
-    dv_b = geostrophic_balance_D(d_eta, 'v', lat, dx)
+    du_b = geostrophic_balance_D(d_eta, 'u', u_lat, dy)
+    dv_b = geostrophic_balance_D(d_eta, 'v', v_lat, dx)
 
     # Find the full velocities
     du = du_u + du_b + du_mean
     dv = dv_u + dv_b + dv_mean
 
     # apply boundary condition
-    du, dv = zonal_boundary(du), meridional_boundary(dv)
+    #du, dv = zonal_boundary(du), meridional_boundary(dv)
 
     return d_eta, du, dv

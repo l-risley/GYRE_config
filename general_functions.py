@@ -76,3 +76,40 @@ def contour(x, y, z, plot_of: str, variable_name: str):
     plt.colorbar(label=f'{variable_name} ({units})')
     plt.savefig(f'gyre{plot_of}{variable_name}.png')
     plt.show()
+
+def plot_one_convergence(x_it, plot_of):
+    """
+    Plot convergence of the cost function/gradient norm at a certain cycle during the assimilation routine.
+    Inputs: - x_it, values of the cost function at each iteration
+            - plot_of, cost function or gradient
+    """
+    number_it = len(x_it)
+    iterations = np.arange(0, number_it)
+    plt.plot(iterations, x_it)
+    plt.yscale('log')
+    plt.xlabel('Iterations')
+    plt.ylabel(f'{plot_of}')
+    plt.title(f'Convergence of {plot_of}')
+    plt.savefig(f'sweConvergence{plot_of}.png')
+    plt.show()
+
+def contour_err(x, y, z, plot_of: str, variable_name: str):
+    # 2D contour plot of one variable
+    # switch coords from m to km
+    x, y = x / 1000, y / 1000
+    plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')
+    # ax = sns.heatmap(z, cmap = 'ocean')
+    plt.xlabel('Longitude (km)')
+    plt.ylabel('Lattitude (km)')
+    plt.title(f'{plot_of} - {variable_name}')
+    if variable_name == 'Elevation':
+        units = '$m$'
+    elif variable_name == 'SF' or variable_name == 'VP':
+        units = '$m^2 s^{-1}$'
+    else:
+        units = '$ms^{-1}$'
+
+    plt.colorbar(extend='max', label=f'{variable_name} ({units})')
+    plt.clim(0, 20)
+    plt.savefig(f'SI_error_{variable_name}.png')
+    plt.show()

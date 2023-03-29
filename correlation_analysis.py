@@ -60,37 +60,43 @@ def corr_mv_at_grid_points(n):
 
     ## 2d arrays for correlation analysis
     # size of eta
-    ny, nx = np.shape(lat)[0], np.shape(lon)[1]
+    ny, nx = np.shape(lat[:50, :50])[0], np.shape(lon[:50, :50])[1]
     eta_u = np.empty((n, 2*ny*nx))
     eta_v = np.empty((n, 2*ny*nx))
     u_v = np.empty((n, 2*ny*nx))
+    print(np.shape(eta_u))
 
     for time_index in range(n): #range(num_times - 1):
+        print(f'Increment at time {time_index}.')
         # find increments
         eta_0 = read_file(eta_input_file, "sossheig", time_index=time_index)
         eta_1 = read_file(eta_input_file, "sossheig", time_index=time_index + 1)
         eta_diff = eta_1 - eta_0
 
-        u_0 = read_file(u_input_file, "vozocrtx", time_index=time_index)
-        u_1 = read_file(u_input_file, "vozocrtx", time_index=time_index + 1)
+        u_0 = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
+        u_1 = read_file(u_input_file, "vozocrtx", time_index=time_index + 1)[0]
         u_diff = u_1 - u_0
 
-        v_0 = read_file(v_input_file, "vomecrty", time_index=time_index)
-        v_1 = read_file(v_input_file, "vomecrty", time_index=time_index + 1)
+        v_0 = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
+        v_1 = read_file(v_input_file, "vomecrty", time_index=time_index + 1)[0]
         v_diff = v_1 - v_0
 
         ## flatten model arrays
-        eta_diff = eta_diff.flatten()
-        u_diff = u_diff.flatten()
-        v_diff = v_diff.flatten()
+        eta_diff = eta_diff[:50, :50].flatten()
+        print(np.shape(eta_diff))
+        u_diff = u_diff[:50, :50].flatten()
+        print(np.shape(u_diff))
+        v_diff = v_diff[:50, :50].flatten()
         # interp velocities to eta grid
         #u_diff, v_diff = interp_zonal(u_diff).flatten(), interp_merid(v_diff).flatten()
 
         # add to matrix to find correlations
+        print(np.shape(np.concatenate((eta_diff, u_diff))))
         eta_u[time_index, :] = np.concatenate((eta_diff, u_diff))
         eta_v[time_index, :] = np.concatenate((eta_diff, v_diff))
         u_v[time_index, :] = np.concatenate((u_diff, v_diff))
 
+    print('Finding the correlations.')
     # find model increment correlations
     corr_deta_du_full = np.corrcoef(eta_u, rowvar=False)
     corr_deta_dv_full = np.corrcoef(eta_v, rowvar=False)
@@ -104,9 +110,9 @@ def corr_mv_at_grid_points(n):
 
     ## plot correlation matrix
     # model increments
-    plot_corr(corr_deta_du, 'Elevation', 'Zonal Velocity')
-    plot_corr(corr_deta_dv, 'Elevation', 'Meridional Velocity')
-    plot_corr(corr_du_dv, 'Zonal Velocity', 'Meridional Velocity')
+    plot_corr(corr_deta_du, 'Elevation', 'Zonal Velocity', lon[:50, :50], lat[:50, :50])
+    plot_corr(corr_deta_dv, 'Elevation', 'Meridional Velocity', lon[:50, :50], lat[:50, :50])
+    plot_corr(corr_du_dv, 'Zonal Velocity', 'Meridional Velocity', lon[:50, :50], lat[:50, :50])
 
 def corr_cv_at_grid_points(alpha, n):
     """
@@ -117,37 +123,41 @@ def corr_cv_at_grid_points(alpha, n):
     # dimensions
     dx, dy = param['dx'], ['dy']
 
-    eta_input_file = "/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T.nc"
-    u_input_file = "/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant_surface.grid_U.nc"
-    v_input_file = "/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant_surface.grid_U.nc"
+    # netcdf file locations
+    eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T.nc"
+    u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant_surface.grid_U.nc"
+    v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config//instant_surface.grid_V.nc"
 
-    lon, lat, time = read_file_info(input_file)
-    num_times = np.size(time)
+    # lon and lat for each grid
+    eta_lon, eta_lat, time = read_file_info(eta_input_file)
+    u_lon, u_lat, time = read_file_info(u_input_file)
+    v_lon, v_lat, time = read_file_info(v_input_file)
 
     ## 2d arrays for correlation analysis
     # size of eta
-    ny, nx = len(lat), len(lon)
+    ny, nx = np.shape(lat)[0], np.shape(lon)[1]
     eta_sf = np.empty((n, 2 * ny * nx))
     eta_vp = np.empty((n, 2 * ny * nx))
     sf_vp = np.empty((n, 2 * ny * nx))
 
     for time_index in range(n):  # range(num_times - 1):
+        print(f'Increment at time {time_index}.')
         # find increments
         eta_0 = read_file(eta_input_file, "sossheig", time_index=time_index)
         eta_1 = read_file(eta_input_file, "sossheig", time_index=time_index + 1)
         eta_diff = eta_1 - eta_0
 
-        u_0 = read_file(u_input_file, "", time_index=time_index)
-        u_1 = read_file(u_input_file, "", time_index=time_index + 1)
+        u_0 = read_file(u_input_file, "vozocrtx", time_index=time_index)
+        u_1 = read_file(u_input_file, "vozocrtx", time_index=time_index + 1)
         u_diff = u_1 - u_0
 
-        v_0 = read_file(v_input_file, "", time_index=time_index)
-        v_1 = read_file(v_input_file, "", time_index=time_index + 1)
+        v_0 = read_file(v_input_file, "vomecrty", time_index=time_index)
+        v_1 = read_file(v_input_file, "vomecrty", time_index=time_index + 1)
         v_diff = v_1 - v_0
 
         # find the control variables
         print(f'Finding control variables at {time_index} days.')
-        eta_diff, sf_u, vp_u, du_mean, dv_mean = T_transform(eta_diff, u_diff, v_diff, dx, dy, lat, alpha)
+        eta_diff, sf_u, vp_u, du_mean, dv_mean = T_transform(eta_diff, u_diff, v_diff, dx, dy, u_lat, v_lat, alpha)
 
         ## flatten model arrays
         eta_diff = eta_diff.flatten()
@@ -182,6 +192,6 @@ if __name__ == '__main__':
         # Tikhonov's regularisation parameter
         alpha = 0
         # number of samples
-        n = 199
+        n = 2
         corr_mv_at_grid_points(n)
         #corr_cv_at_grid_points(alpha, n)

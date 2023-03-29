@@ -40,7 +40,7 @@ def geostrophic_balance_D(eta : np.ndarray, vel : str, lat, dz):
         # interp to the u grid
         dndy_ugrid = interp_zonal(dndy)
         dndy_ugrid[:, [0, -1]] = 0
-        cor = f_0 + beta * lat[:-1, :]
+        cor = f_0 + beta * lat
         return - g * np.divide(dndy_ugrid, cor)
 
     elif vel == 'v':
@@ -56,6 +56,6 @@ def geostrophic_balance_D(eta : np.ndarray, vel : str, lat, dz):
         dndx_vgrid[[0, -1], :] = 0
 
         # calculate the coriolis term on v-grid
-        cor = f_0 + beta * lat[:,1:]
+        cor = f_0 + beta * lat
         return g * np.divide(dndx_vgrid, cor)
 

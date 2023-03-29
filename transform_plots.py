@@ -157,11 +157,63 @@ def transform_plots(alpha, time_index, conv):
     contour(eta_x, eta_y, dsf_new, f'increment', 'SF')
     contour(eta_x, eta_y, dvp_new, f'increment', 'VP')
 
+def control_plots(alpha, time_index):
+    dy, dx = param['dy'], param['dx']
+
+    # netcdf file locations
+    eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T.nc"
+    u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant_surface.grid_U.nc"
+    v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config//instant_surface.grid_V.nc"
+
+    # read eta, u and v from files at two times (1 day apart)
+    # calculate the increment
+    eta_0 = read_file(eta_input_file, "sossheig", time_index=time_index)
+    eta_1 = read_file(eta_input_file, "sossheig", time_index=time_index + 1)
+    eta_diff = eta_1 - eta_0
+
+    u_0 = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
+    u_1 = read_file(u_input_file, "vozocrtx", time_index=time_index + 1)[0]
+    u_diff = u_1 - u_0
+
+    v_0 = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
+    v_1 = read_file(v_input_file, "vomecrty", time_index=time_index + 1)[0]
+    v_diff = v_1 - v_0
+
+    # lon and lat for each grid
+    eta_lon, eta_lat, time = read_file_info(eta_input_file)
+    u_lon, u_lat, time = read_file_info(u_input_file)
+    v_lon, v_lat, time = read_file_info(v_input_file)
+
+    # size of eta
+    ny, nx = np.shape(eta_lat)[0] - 1, np.shape(eta_lon)[1] - 1
+
+    ##### FIND SF AND VP FOR WITHIN THE DOMAIN, NO BOUNDARY for increments
+    deta_new = eta_diff[1:-2, 2:-1]
+    du_new = u_diff[1:-2, 1:-1]
+    dv_new = v_diff[1:-1, 2:-1]
+    ny, nx = np.shape(deta_new)
+    print(f'Shape of new elevation : {np.shape(deta_new)}')
+    print(f' Shape of new u : {np.shape(du_new)}')
+    print(f' Shape of new v : {np.shape(dv_new)}')
+
+    eta_x, eta_y = eta_lon[1:-2, 2:-1], eta_lat[1:-2, 2:-1]
+    u_x, u_y = u_lon[1:-2, 1:-1], u_lat[1:-2, 1:-1]
+    v_x, v_y = v_lon[1:-1, 2:-1], v_lat[1:-1, 2:-1]
+
+    # find the control variables from the model increments
+    d_eta, sf_u, vp_u, du_mean, dv_mean = T_transform(deta_new, du_new, dv_new, dx, dy, u_y, v_y, alpha)
+
+    dsf_new, dvp_new = sf_u[1:-1, 1:-1], vp_u[1:-1, 1:-1]
+
+    contour(eta_x, eta_y, dsf_new, f'Unbalanced increment', 'SF')
+    contour(eta_x, eta_y, dvp_new, f'Unbalanced increment', 'VP')
+    
 if __name__ == '__main__':
     # Tikhonov's regularisation parameter
     alpha = 0
     # time to plot
     time_index = 700
     conv = 'convergence'
-    transform_plots(alpha, time_index, conv)
+    #transform_plots(alpha, time_index, conv)
+    control_plots(alpha, time_index)
 

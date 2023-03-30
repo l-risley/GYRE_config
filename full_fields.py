@@ -18,7 +18,7 @@ def plots(time_index):
     eta = read_file(eta_input_file, "sossheig", time_index=time_index)
     u = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
     v = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
-    #w = read_file(w_input_file, "vomecrty", time_index=time_index)[0] #TODO: Check code in morning
+    #w = read_file(w_input_file, "vomecrty", time_index=time_index)[0] #TODO: Check code in morning, WHERE IS THIS SAVED IN WORK DIRECTORY?
 
     # lon and lat for each grid
     eta_lon, eta_lat, time = read_file_info(eta_input_file)
@@ -35,6 +35,6 @@ def plots(time_index):
 
 if __name__ == '__main__':
     # time to plot
-    time_index = 700
+    time_index = 0
     plots(time_index)
 

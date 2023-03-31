@@ -5,6 +5,7 @@ General functions needed for the transforms and correlation analysis.
 
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 def dzdx(z, dx: int):
     # Take the difference between u at index j+1 and j
@@ -74,7 +75,7 @@ def contour(x, y, z, plot_of: str, variable_name: str):
     else:
         units = '$ms^{-1}$'
     plt.colorbar(label=f'{variable_name} ({units})')
-    plt.savefig(f'gyre{plot_of}{variable_name}.png')
+    plt.savefig(f'plots/{plot_of}{variable_name}.png')
     plt.show()
 
 def plot_one_convergence(x_it, plot_of):

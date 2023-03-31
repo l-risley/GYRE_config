@@ -63,7 +63,7 @@ def outside_boundary(z: np.ndarray, location: str):
 def contour(x, y, z, plot_of: str, variable_name: str):
     # 2D contour plot of one variable
     # switch coords from m to km
-    plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')
+    plt.pcolormesh(x, y, z, cmap='viridis', shading='auto') #, vmin=-2.5, vmax=1.5)
     # ax = sns.heatmap(z, cmap = 'ocean')
     plt.xlabel('Longitude ($^\circ$)')
     plt.ylabel('Lattitude ($^\circ$)')

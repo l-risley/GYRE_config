@@ -55,12 +55,12 @@ def plots_full():
 
     for time_index in range(num_times - 1):
         print(f'Plots at {time_index}')
-        eta = read_file(eta_input_file, "sossheig", time_index=time_index)
-        u = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
+        #eta = read_file(eta_input_file, "sossheig", time_index=time_index)
+        #u = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
         v = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
 
-        contour(eta_lon, eta_lat, eta, f'time_{time[time_index]}', 'Elevation')
-        contour(u_lon, u_lat, u, f'time_{time[time_index]}', 'Zonal Velocity')
+        #contour(eta_lon, eta_lat, eta, f'time_{time[time_index]}', 'Elevation')
+        #contour(u_lon, u_lat, u, f'time_{time[time_index]}', 'Zonal Velocity')
         contour(v_lon, v_lat, v, f'time_{time[time_index]}', 'Meridional Velocity')
 
 if __name__ == '__main__':

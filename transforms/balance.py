@@ -33,7 +33,7 @@ def geostrophic_balance_D(eta : np.ndarray, vel : str, lat, dz):
         dy = dz
         # interpolate eta to v grid
         eta_vgrid = interp_merid(eta)
-        # eta = 0 on the v boundary and outside the u boundary
+        # eta = 0 on the v boundary and outside the u boundary #TODO: need to change this assumption now that the boundaires are weird!
         eta_vgrid = outside_boundary(eta_vgrid, 'nesw')
         # find dndy on the eta grid
         dndy = dzdy(eta_vgrid, dy)

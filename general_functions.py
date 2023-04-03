@@ -90,8 +90,8 @@ def plot_one_convergence(x_it, plot_of):
     plt.yscale('log')
     plt.xlabel('Iterations')
     plt.ylabel(f'{plot_of}')
-    plt.title(f'Convergence of {plot_of}')
-    plt.savefig(f'sweConvergence{plot_of}.png')
+    plt.title(f'plots/Convergence of {plot_of}')
+    plt.savefig(f'plots/Convergence{plot_of}.png')
     plt.show()
 
 def contour_err(x, y, z, plot_of: str, variable_name: str):
@@ -112,5 +112,5 @@ def contour_err(x, y, z, plot_of: str, variable_name: str):
 
     plt.colorbar(extend='max', label=f'{variable_name} ({units})')
     plt.clim(0, 20)
-    plt.savefig(f'SI_error_{variable_name}.png')
+    plt.savefig(f'plots/error_{variable_name}.png')
     plt.show()

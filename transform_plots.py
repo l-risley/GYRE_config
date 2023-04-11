@@ -15,9 +15,9 @@ def transform_plots(alpha, time_index, conv):
     dy, dx = param['dy'], param['dx']
 
     # netcdf file locations
-    eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T.nc"
-    u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant_surface.grid_U.nc"
-    v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config//instant_surface.grid_V.nc"
+    eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T_depth0.nc"
+    u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_U_depth0.nc"
+    v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_V_depth0.nc"
 
     # read eta, u and v from files at two times (1 day apart)
     # calculate the increment
@@ -51,17 +51,17 @@ def transform_plots(alpha, time_index, conv):
 
     # plot full fields at both times
 
-    #contour(eta_lon, eta_lat, eta_0, f'at time {time[time_index]}', 'Elevation')
-    #contour(u_lon, u_lat, u_0, f'at time {time[time_index]}', 'Zonal Velocity')
-    #contour(v_lon, v_lat, v_0, f'at time {time[time_index]}', 'Meridional Velocity')
+    contour(eta_lon, eta_lat, eta_0, f'at time {time[time_index]}', 'Elevation')
+    contour(u_lon, u_lat, u_0, f'at time {time[time_index]}', 'Zonal Velocity')
+    contour(v_lon, v_lat, v_0, f'at time {time[time_index]}', 'Meridional Velocity')
 
-    #contour(eta_lon, eta_lat, eta_1, f'at time {time[time_index+1]}', 'Elevation')
-    #contour(u_lon, u_lat, u_1, f'at time {time[time_index+1]}', 'Zonal Velocity')
-    #contour(v_lon, v_lat, v_1, f'at time {time[time_index+1]}', 'Meridional Velocity')
+    contour(eta_lon, eta_lat, eta_1, f'at time {time[time_index+1]}', 'Elevation')
+    contour(u_lon, u_lat, u_1, f'at time {time[time_index+1]}', 'Zonal Velocity')
+    contour(v_lon, v_lat, v_1, f'at time {time[time_index+1]}', 'Meridional Velocity')
 
-    #contour(eta_lon, eta_lat, eta_diff, f'increment', 'Elevation')
-    #contour(u_lon, u_lat, u_diff, f'increment', 'Zonal Velocity')
-    #contour(v_lon, v_lat, v_diff, f'increment', 'Meridional Velocity')
+    contour(eta_lon, eta_lat, eta_diff, f'increment', 'Elevation')
+    contour(u_lon, u_lat, u_diff, f'increment', 'Zonal Velocity')
+    contour(v_lon, v_lat, v_diff, f'increment', 'Meridional Velocity')
 
     print(f'Shape of elevation : {np.shape(eta_0)}')
     print(f' Shape of u : {np.shape(u_0)}')
@@ -81,9 +81,9 @@ def transform_plots(alpha, time_index, conv):
     u_x, u_y = u_lon[1:-2, 1:-1], u_lat[1:-2, 1:-1]
     v_x, v_y = v_lon[1:-1, 2:-1], v_lat[1:-1, 2:-1]
 
-    #contour(eta_x, eta_y, eta_new, f'no_bc', 'Elevation')
-    #contour(u_x, u_y, u_new, f'no_bc', 'Zonal Velocity')
-    #contour(v_x, v_y, v_new, f'no_bc', 'Meridional Velocity')
+    contour(eta_x, eta_y, eta_new, f'no_bc', 'Elevation')
+    contour(u_x, u_y, u_new, f'no_bc', 'Zonal Velocity')
+    contour(v_x, v_y, v_new, f'no_bc', 'Meridional Velocity')
 
     # find the sf and vp for full field
     if conv is None:
@@ -107,8 +107,8 @@ def transform_plots(alpha, time_index, conv):
     contour(eta_x, eta_y, vp_new, f'at time {time[time_index + 1]}', 'VP')
 
     # plot reconstructed and differences
-    #contour(u_x, u_y, u_re, f'Reconstructed', 'Zonal Velocity')
-    #contour(v_x, v_y, v_re, f'Reconstructed', 'Meridional Velocity')
+    contour(u_x, u_y, u_re, f'Reconstructed', 'Zonal Velocity')
+    contour(v_x, v_y, v_re, f'Reconstructed', 'Meridional Velocity')
 
     contour(u_x, u_y, du, f'Reconstruction difference', 'Zonal Velocity')
     contour(v_x, v_y, dv, f'Reconstruction difference', 'Meridional Velocity')
@@ -149,8 +149,8 @@ def transform_plots(alpha, time_index, conv):
     elif conv == 'convergence':
         sf_new, vp_new, cf_list, grad_list = tik_reg(alpha, du_new, dv_new, dy, dx, ny, nx, conv)
         # plot the convergences
-        plot_one_convergence(cf_list, 'Cost Function')
-        plot_one_convergence(grad_list, 'Gradient Norm')
+        plot_one_convergence(cf_list, 'Cost Function for increments')
+        plot_one_convergence(grad_list, 'Gradient Norm increments')
 
     dsf_new, dvp_new = sf_new[1:-1, 1:-1], vp_new[1:-1, 1:-1]
 
@@ -161,9 +161,9 @@ def control_plots(alpha, time_index):
     dy, dx = param['dy'], param['dx']
 
     # netcdf file locations
-    eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T.nc"
-    u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant_surface.grid_U.nc"
-    v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config//instant_surface.grid_V.nc"
+    eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T_depth0.nc"
+    u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_U_depth0.nc"
+    v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_V_depth0.nc"
 
     # read eta, u and v from files at two times (1 day apart)
     # calculate the increment
@@ -215,5 +215,5 @@ if __name__ == '__main__':
     time_index = 700
     conv = 'convergence'
     #transform_plots(alpha, time_index, conv)
-    #control_plots(alpha, time_index)
+    control_plots(alpha, time_index)
 

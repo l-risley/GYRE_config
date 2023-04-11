@@ -99,33 +99,21 @@ def corr_mv_increments(n):
     Inputs: n, number of time intervals to store perturbations.
     """
     # netcdf file locations
-    eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T_depth0.nc"
-    u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_U_depth0.nc"
-    v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_V_depth0.nc"
+    input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/output_file_combined.nc"
 
-    eta_lon, eta_lat, time = read_file_info(eta_input_file)
-    u_lon, u_lat, time = read_file_info(u_input_file)
-    v_lon, v_lat, time = read_file_info(v_input_file)
+    lon, lat, time = read_file_info(input_file)
 
     # initialise arrays for correlations calculations
-    sum_sq_eta, sum_sq_u, sum_sq_v = np.zeros_like(eta_lat), np.zeros_like(u_lat), np.zeros_like(v_lat)
-    sum_eta, sum_u, sum_v = np.zeros_like(eta_lat), np.zeros_like(u_lat), np.zeros_like(v_lat)
-    sum_etau, sum_etav, sum_uv = np.zeros_like(eta_lat), np.zeros_like(eta_lat), np.zeros_like(eta_lat)
+    sum_sq_eta, sum_sq_u, sum_sq_v = np.zeros_like(lat), np.zeros_like(lat), np.zeros_like(lat)
+    sum_eta, sum_u, sum_v = np.zeros_like(lat), np.zeros_like(lat), np.zeros_like(lat)
+    sum_etau, sum_etav, sum_uv = np.zeros_like(lat), np.zeros_like(lat), np.zeros_like(lat)
 
     for time_index in range(n):  # range(num_times - 1):
         print(f'Increment at time {time_index}.')
         # find increments
-        eta_0 = read_file(eta_input_file, "sossheig", time_index=time_index)
-        eta_1 = read_file(eta_input_file, "sossheig", time_index=time_index + 1)
-        eta_diff = eta_1 - eta_0
-
-        u_0 = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
-        u_1 = read_file(u_input_file, "vozocrtx", time_index=time_index + 1)[0]
-        u_diff = u_1 - u_0
-
-        v_0 = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
-        v_1 = read_file(v_input_file, "vomecrty", time_index=time_index + 1)[0]
-        v_diff = v_1 - v_0
+        eta_diff = read_file(input_file, "sossheig", time_index=time_index)
+        u_diff = read_file(input_file, "vozocrtx", time_index=time_index)
+        v_diff = read_file(input_file, "vomecrty", time_index=time_index)
 
         sum_sq_eta += np.square(eta_diff)
         sum_sq_u += np.square(u_diff)
@@ -158,9 +146,9 @@ def corr_mv_increments(n):
 
     ## plot correlation matrix
     # full model fields
-    plot_corr(corr_eta_u, 'Elevation', 'Zonal Velocity increments', eta_lon, eta_lat)
-    plot_corr(corr_eta_v, 'Elevation', 'Meridional Velocity increments', eta_lon, eta_lat)
-    plot_corr(corr_u_v, 'Zonal', 'Meridional Velocity increments', eta_lon, eta_lat)
+    plot_corr(corr_eta_u, 'Elevation', 'Zonal Velocity increments', lon, lat)
+    plot_corr(corr_eta_v, 'Elevation', 'Meridional Velocity increments', lon, lat)
+    plot_corr(corr_u_v, 'Zonal', 'Meridional Velocity increments', lon, lat)
 
 def corr_mv_ub_increments(n):
     """
@@ -248,46 +236,30 @@ def corr_mv_ub_increments(n):
     plot_corr(corr_eta_v[1:-1, 1:-1], 'Elevation', 'Unbalanced V increments', eta_x[1:-1, 1:-1], eta_y[1:-1, 1:-1])
     plot_corr(corr_u_v[1:-1, 1:-1], 'Unbalanced', 'velocity increments', eta_x[1:-1, 1:-1], eta_y[1:-1, 1:-1])
 
-def corr_sf_vp(alpha, n):
+def corr_sf_vp(n):
     """
-    Find the correlations of elevation, streamfunction and velocity potential at each grid point.
-    Produce correlation matrix plots.
+    Find the correlations of the control variable increments at each grid point. Produce correlation matrix plots.
+    control variables have been run on monsoon and outputs stored.
     Inputs: n, number of time intervals to store perturbations
     """
 
-    dy, dx = param['dy'], param['dx']
-
     # netcdf file locations
     eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T_depth0.nc"
-    u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_U_depth0.nc"
-    v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_V_depth0.nc"
+    input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/output_sf_vp_combined.nc"
 
-    eta_lon, eta_lat, time = read_file_info(eta_input_file)
-    eta_x, eta_y = eta_lon[1:-2, 2:-1], eta_lat[1:-2, 2:-1]
+    eta_lon, eta_lat, time = read_file_info(input_file)
 
     # initialise arrays for correlations calculations
-    sum_sq_eta, sum_sq_sf, sum_sq_vp = np.zeros_like(eta_y), np.zeros_like(eta_y), np.zeros_like(eta_y)
-    sum_eta, sum_sf, sum_vp = np.zeros_like(eta_y), np.zeros_like(eta_y), np.zeros_like(eta_y)
-    sum_etasf, sum_etavp, sum_sfvp = np.zeros_like(eta_y), np.zeros_like(eta_y), np.zeros_like(eta_y)
+    sum_sq_eta, sum_sq_sf, sum_sq_vp = np.zeros_like(eta_lon), np.zeros_like(eta_lon), np.zeros_like(eta_lon)
+    sum_eta, sum_sf, sum_vp = np.zeros_like(eta_lon), np.zeros_like(eta_lon), np.zeros_like(eta_lon)
+    sum_etasf, sum_etavp, sum_sfvp = np.zeros_like(eta_lon), np.zeros_like(eta_lon), np.zeros_like(eta_lon)
 
     for time_index in range(n):  # range(num_times - 1):
-        print(f'Increment at time {time_index}.')
-        # find increments
+        print(f'Time {time_index}.')
+
         eta = read_file(eta_input_file, "sossheig", time_index=time_index)
-        u = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
-        v = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
-
-        # remove boundaries
-        eta = eta[1:-2, 2:-1]
-        u = u[1:-2, 1:-1]
-        v = v[1:-1, 2:-1]
-
-        ny, nx = np.shape(eta)
-        sf, vp = tik_reg(alpha, u, v, dy, dx, ny, nx)
-
-        # reduce the control arrays to be the same size as eta grid
-        sf = sf[1:-1, 1:-1]
-        vp = vp[1:-1, 1:-1]
+        sf = read_file(input_file, "streamfunction", time_index=time_index)
+        vp = read_file(input_file, "velocity_potential", time_index=time_index)
 
         sum_sq_eta += np.square(eta)
         sum_sq_sf += np.square(sf)
@@ -320,61 +292,34 @@ def corr_sf_vp(alpha, n):
 
     ## plot correlation matrix
     # full model fields
-    plot_corr(corr_eta_sf, 'Elevation', 'SF', eta_x, eta_y)
-    plot_corr(corr_eta_vp, 'Elevation', 'VP', eta_x, eta_y)
-    plot_corr(corr_sf_vp, 'SF', 'VP', eta_x, eta_y)
+    plot_corr(corr_eta_sf[1:-1, 1:-1], 'Elevation', 'SF', eta_lon[1:-1, 1:-1], eta_lat[1:-1, 1:-1])
+    plot_corr(corr_eta_vp[1:-1, 1:-1], 'Elevation', 'VP', eta_lon[1:-1, 1:-1], eta_lat[1:-1, 1:-1])
+    plot_corr(corr_sf_vp[1:-1, 1:-1], 'SF', 'VP', eta_lon[1:-1, 1:-1], eta_lat[1:-1, 1:-1])
 
-def corr_sf_vp_increments(alpha, n):
+def corr_sf_vp_increments(n):
     """
-    Find the correlations of elevation, streamfunction and velocity potential increments at each grid point.
-    Produce correlation matrix plots.
+    Find the correlations of the control variable increments at each grid point. Produce correlation matrix plots.
+    control variables have been run on monsoon and outputs stored.
     Inputs: n, number of time intervals to store perturbations
     """
 
-    dy, dx = param['dy'], param['dx']
-
     # netcdf file locations
-    eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T_depth0.nc"
-    u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_U_depth0.nc"
-    v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_V_depth0.nc"
+    eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/output_file_combined.nc"
+    input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/output_diff_sf_vp_combined.nc"
 
-    eta_lon, eta_lat, time = read_file_info(eta_input_file)
-    u_lon, u_lat, time = read_file_info(u_input_file)
-    v_lon, v_lat, time = read_file_info(v_input_file)
-
-    eta_x, eta_y = eta_lon[1:-2, 2:-1], eta_lat[1:-2, 2:-1]
+    eta_lon, eta_lat, time = read_file_info(input_file)
 
     # initialise arrays for correlations calculations
-    sum_sq_eta, sum_sq_sf, sum_sq_vp = np.zeros_like(eta_y), np.zeros_like(eta_y), np.zeros_like(eta_y)
-    sum_eta, sum_sf, sum_vp = np.zeros_like(eta_y), np.zeros_like(eta_y), np.zeros_like(eta_y)
-    sum_etasf, sum_etavp, sum_sfvp = np.zeros_like(eta_y), np.zeros_like(eta_y), np.zeros_like(eta_y)
+    sum_sq_eta, sum_sq_sf, sum_sq_vp = np.zeros_like(eta_lon), np.zeros_like(eta_lon), np.zeros_like(eta_lon)
+    sum_eta, sum_sf, sum_vp = np.zeros_like(eta_lon), np.zeros_like(eta_lon), np.zeros_like(eta_lon)
+    sum_etasf, sum_etavp, sum_sfvp = np.zeros_like(eta_lon), np.zeros_like(eta_lon), np.zeros_like(eta_lon)
 
     for time_index in range(n):  # range(num_times - 1):
-        print(f'Increment at time {time_index}.')
-        # find increments
-        eta_0 = read_file(eta_input_file, "sossheig", time_index=time_index)
-        eta_1 = read_file(eta_input_file, "sossheig", time_index=time_index + 1)
-        eta_diff = eta_1 - eta_0
+        print(f'Time {time_index}.')
 
-        u_0 = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
-        u_1 = read_file(u_input_file, "vozocrtx", time_index=time_index + 1)[0]
-        u_diff = u_1 - u_0
-
-        v_0 = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
-        v_1 = read_file(v_input_file, "vomecrty", time_index=time_index + 1)[0]
-        v_diff = v_1 - v_0
-
-        # remove boundaries
-        eta_diff = eta_diff[1:-2, 2:-1]
-        u_diff = u_diff[1:-2, 1:-1]
-        v_diff = v_diff[1:-1, 2:-1]
-
-        ny, nx = np.shape(eta_diff)
-        sf, vp = tik_reg(alpha, u_diff, v_diff, dy, dx, ny, nx)
-
-        # reduce the control arrays to be the same size as eta grid
-        sf = sf[1:-1, 1:-1]
-        vp = vp[1:-1, 1:-1]
+        eta_diff = read_file(eta_input_file, "sossheig", time_index=time_index)
+        sf = read_file(input_file, "streamfunction", time_index=time_index)
+        vp = read_file(input_file, "velocity_potential", time_index=time_index)
 
         sum_sq_eta += np.square(eta_diff)
         sum_sq_sf += np.square(sf)
@@ -407,9 +352,9 @@ def corr_sf_vp_increments(alpha, n):
 
     ## plot correlation matrix
     # full model fields
-    plot_corr(corr_eta_sf, 'Elevation', 'SF increments', eta_x, eta_y)
-    plot_corr(corr_eta_vp, 'Elevation', 'VP increments', eta_x, eta_y)
-    plot_corr(corr_sf_vp, 'SF', 'VP increments', eta_x, eta_y)
+    plot_corr(corr_eta_sf[1:-1, 1:-1], 'Elevation', 'SF increments', eta_lon[1:-1, 1:-1], eta_lat[1:-1, 1:-1])
+    plot_corr(corr_eta_vp[1:-1, 1:-1], 'Elevation', 'VP increments', eta_lon[1:-1, 1:-1], eta_lat[1:-1, 1:-1])
+    plot_corr(corr_sf_vp[1:-1, 1:-1], 'SF', 'VP', eta_lon[1:-1, 1:-1], eta_lat[1:-1, 1:-1])
 
 def corr_cv(n):
     """
@@ -476,8 +421,8 @@ if __name__ == '__main__':
         # number of samples
         n = 150
         #corr_mv(n)
-        corr_mv_increments(n)
-        corr_mv_ub_increments(n)
-        #corr_sf_vp(alpha, n)
-        #corr_sf_vp_increments(alpha, n)
-        #corr_cv(alpha, n)
+        #corr_mv_increments(n)
+        #corr_mv_ub_increments(n)
+        corr_sf_vp(n)
+        #corr_sf_vp_increments(n)
+        #corr_cv(n)

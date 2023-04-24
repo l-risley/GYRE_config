@@ -177,9 +177,7 @@ def balance_plots(time_index):
     # read eta, u and v from files at two times (1 day apart)
     # calculate the increment
     eta = read_file(eta_input_file, "sossheig", time_index=time_index)
-
     u = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
-
     v = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
 
     # lon and lat for each grid
@@ -187,26 +185,23 @@ def balance_plots(time_index):
     u_lon, u_lat, time = read_file_info(u_input_file)
     v_lon, v_lat, time = read_file_info(v_input_file)
 
-    u_x, u_y = u_lon[1:-2, 1:-1], u_lat[1:-2, 1:-1]
-    v_x, v_y = v_lon[1:-1, 2:-1], v_lat[1:-1, 2:-1]
-
-    # balanced components
     # Use geostrophic balance to find the balanced velocities
-    u_b = geostrophic_balance_D(eta[1:-2, 2:-1], 'u', u_y, dy)
-    v_b = geostrophic_balance_D(eta[1:-2, 2:-1], 'v', v_y, dx)
+    u_b = geostrophic_balance(eta, 'u', u_lat, dy)
+    v_b = geostrophic_balance(eta, 'v', v_lat, dx)
 
     # Find the unbalanced components of the velocities
-    u_u = u[1:-2, 1:-1] - u_b
-    v_u = v[1:-1, 2:-1] - v_b
+    u_u = u - u_b
+    v_u = v - v_b
+
     # plot full fields, and balanced and unbalanced components
-    contour(u_x, u_y, u[1:-2, 1:-1], f'at time {time[time_index]}', 'Full Zonal V')
-    contour(v_x, v_y, v[1:-1, 2:-1], f'at time {time[time_index]}', 'Full Meridional V')
+    contour_bu(u_lon, u_lat, u, f'at time {time[time_index]}', 'Full Zonal V')
+    contour_bv(v_lon, v_lat, v, f'at time {time[time_index]}', 'Full Meridional V')
 
-    contour(u_x, u_y, u_b, f'at time {time[time_index]}', 'Balanced Zonal V')
-    contour(v_x, v_y, v_b, f'at time {time[time_index]}', 'Balanced Meridional V')
+    contour_bu(u_lon, u_lat, u_b, f'at time {time[time_index]}', 'Balanced Zonal V')
+    contour_bv(v_lon, v_lat, v_b, f'at time {time[time_index]}', 'Balanced Meridional V')
 
-    contour(u_x, u_y, u_u, f'at time {time[time_index]}', 'Unbalanced Zonal V')
-    contour(v_x, v_y, v_u, f'at time {time[time_index]}', 'Unbalanced Meridional V')
+    contour_bu(u_lon, u_lat, u_u, f'at time {time[time_index]}', 'Unbalanced Zonal V')
+    contour_bv(v_lon, v_lat, v_u, f'at time {time[time_index]}', 'Unbalanced Meridional V')
 
     ##################################################################################
     # increments
@@ -222,24 +217,80 @@ def balance_plots(time_index):
 
     # balanced components
     # Use geostrophic balance to find the balanced velocities
-    du_b = geostrophic_balance_D(eta_diff[1:-2, 2:-1], 'u', u_y, dy)
-    dv_b = geostrophic_balance_D(eta_diff[1:-2, 2:-1], 'v', v_y, dx)
+    du_b = geostrophic_balance(eta_diff, 'u', u_lat, dy)
+    dv_b = geostrophic_balance(eta_diff, 'v', v_lat, dx)
 
     # Find the unbalanced components of the velocities
-    du_u = u_diff[1:-2, 1:-1] - du_b
-    dv_u = v_diff[1:-1, 2:-1] - dv_b
+    du_u = u_diff - du_b
+    dv_u = v_diff - dv_b
     # plot full fields, and balanced and unbalanced components
-    contour(u_x, u_y, u_diff[1:-2, 1:-1], f'at time {time[time_index]}', 'Zonal V Increment')
-    contour(v_x, v_y, v_diff[1:-1, 2:-1], f'at time {time[time_index]}', 'Meridional V Increment')
+    contour_ubi(u_lon, u_lat, u_diff, f'at time {time[time_index]}', 'Zonal V Increment')
+    contour_vbi(v_lon, v_lat, v_diff, f'at time {time[time_index]}', 'Meridional V Increment')
 
-    contour(u_x, u_y, du_b, f'at time {time[time_index]}', 'Balanced Zonal V Increment')
-    contour(v_x, v_y, dv_b, f'at time {time[time_index]}', 'Balanced Meridional V Increment ')
+    contour_ubi(u_lon, u_lat, du_b, f'at time {time[time_index]}', 'Balanced Zonal V Increment')
+    contour_vbi(v_lon, v_lat, dv_b, f'at time {time[time_index]}', 'Balanced Meridional V Increment ')
 
-    contour(u_x, u_y, du_u, f'at time {time[time_index]}', 'Unbalanced Zonal V Increment')
-    contour(v_x, v_y, dv_u, f'at time {time[time_index]}', 'Unbalanced Meridional V Increment')
+    contour_ubi(u_lon, u_lat, du_u, f'at time {time[time_index]}', 'Unbalanced Zonal V Increment')
+    contour_vbi(v_lon, v_lat, dv_u, f'at time {time[time_index]}', 'Unbalanced Meridional V Increment')
 
 
 def control_plots(alpha, time_index):
+    """
+    Plots from the gyre configuration for the control variables - elevation increment, unbalanced SF and VP.
+    Inputs: alpha, Tikhonov's regularisation parameter
+            time_index, time of plots
+    """
+    dy, dx = param['dy'], param['dx']
+
+    # netcdf file locations
+    eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T_depth0.nc"
+    u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_U_depth0.nc"
+    v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_V_depth0.nc"
+
+    # read eta, u and v from files at two times (1 day apart)
+    # calculate the increment
+    eta_0 = read_file(eta_input_file, "sossheig", time_index=time_index)
+    eta_1 = read_file(eta_input_file, "sossheig", time_index=time_index + 1)
+    eta_diff = eta_1 - eta_0
+
+    u_0 = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
+    u_1 = read_file(u_input_file, "vozocrtx", time_index=time_index + 1)[0]
+    u_diff = u_1 - u_0
+
+    v_0 = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
+    v_1 = read_file(v_input_file, "vomecrty", time_index=time_index + 1)[0]
+    v_diff = v_1 - v_0
+
+    # lon and lat for each grid
+    eta_lon, eta_lat, time = read_file_info(eta_input_file)
+    u_lon, u_lat, time = read_file_info(u_input_file)
+    v_lon, v_lat, time = read_file_info(v_input_file)
+
+    # size of eta
+    ny, nx = np.shape(eta_lat)[0] - 1, np.shape(eta_lon)[1] - 1
+
+    ##### FIND SF AND VP FOR WITHIN THE DOMAIN, NO BOUNDARY for increments
+    deta_new = eta_diff[1:-2, 2:-1]
+    du_new = u_diff[1:-2, 1:-1]
+    dv_new = v_diff[1:-1, 2:-1]
+    ny, nx = np.shape(deta_new)
+    print(f'Shape of new elevation : {np.shape(deta_new)}')
+    print(f' Shape of new u : {np.shape(du_new)}')
+    print(f' Shape of new v : {np.shape(dv_new)}')
+
+    eta_x, eta_y = eta_lon[1:-2, 2:-1], eta_lat[1:-2, 2:-1]
+    u_x, u_y = u_lon[1:-2, 1:-1], u_lat[1:-2, 1:-1]
+    v_x, v_y = v_lon[1:-1, 2:-1], v_lat[1:-1, 2:-1]
+
+    # find the control variables from the model increments
+    d_eta, sf_u, vp_u, du_mean, dv_mean = T_transform(deta_new, du_new, dv_new, dx, dy, u_y, v_y, alpha)
+
+    dsf_new, dvp_new = sf_u[1:-1, 1:-1], vp_u[1:-1, 1:-1]
+
+    contour(eta_x, eta_y, dsf_new, f'Unbalanced increment', 'SF')
+    contour(eta_x, eta_y, dvp_new, f'Unbalanced increment', 'VP')
+
+def sfvp_plots(alpha, time_index):
     """
     Plots from the gyre configuration for the control variables - elevation increment, unbalanced SF and VP.
     Inputs: alpha, Tikhonov's regularisation parameter
@@ -301,7 +352,7 @@ if __name__ == '__main__':
     # time to plot
     time_index = 700
     conv = 'convergence'
-    #transform_plots(alpha, time_index, conv)
-    #control_plots(alpha, time_index)
-    balance_plots(time_index)
+    transform_plots(alpha, time_index, conv)
+    control_plots(alpha, time_index)
+    #balance_plots(time_index)
 

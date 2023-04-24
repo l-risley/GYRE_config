@@ -12,13 +12,11 @@ def one_plot(time_index):
     eta_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_T_depth0.nc"
     u_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_U_depth0.nc"
     v_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_V_depth0.nc"
-    #w_input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/instant.grid_W_depth0.nc"
 
-    # read eta, u, v and w from files
+    # read eta, u and v from files
     eta = read_file(eta_input_file, "sossheig", time_index=time_index)
     u = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
     v = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
-    #w = read_file(w_input_file, "vomecrty", time_index=time_index)[0] #TODO: Check code in morning, WHERE IS THIS SAVED IN WORK DIRECTORY?
 
     # lon and lat for each grid
     eta_lon, eta_lat, time = read_file_info(eta_input_file)

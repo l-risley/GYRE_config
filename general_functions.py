@@ -78,6 +78,78 @@ def contour(x, y, z, plot_of: str, variable_name: str):
     plt.savefig(f'plots/{plot_of}{variable_name}.png')
     plt.show()
 
+def contour_bu(x, y, z, plot_of: str, variable_name: str):
+    # 2D contour plot of one variable
+    # switch coords from m to km
+    plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-3, vmax=3.5)
+    # ax = sns.heatmap(z, cmap = 'ocean')
+    plt.xlabel('Longitude ($^\circ$)')
+    plt.ylabel('Lattitude ($^\circ$)')
+    plt.title(f'{variable_name} - {plot_of}')
+    if variable_name == 'Elevation':
+        units = '$m$'
+    elif variable_name == 'SF' or variable_name == 'VP':
+        units = '$m^2 s^{-1}$'
+    else:
+        units = '$ms^{-1}$'
+    plt.colorbar(label=f'{variable_name} ({units})')
+    plt.savefig(f'plots/{plot_of}{variable_name}.png')
+    plt.show()
+
+def contour_bv(x, y, z, plot_of: str, variable_name: str):
+    # 2D contour plot of one variable
+    # switch coords from m to km
+    plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-2, vmax=3)
+    # ax = sns.heatmap(z, cmap = 'ocean')
+    plt.xlabel('Longitude ($^\circ$)')
+    plt.ylabel('Lattitude ($^\circ$)')
+    plt.title(f'{variable_name} - {plot_of}')
+    if variable_name == 'Elevation':
+        units = '$m$'
+    elif variable_name == 'SF' or variable_name == 'VP':
+        units = '$m^2 s^{-1}$'
+    else:
+        units = '$ms^{-1}$'
+    plt.colorbar(label=f'{variable_name} ({units})')
+    plt.savefig(f'plots/{plot_of}{variable_name}.png')
+    plt.show()
+
+def contour_ubi(x, y, z, plot_of: str, variable_name: str):
+    # 2D contour plot of one variable
+    # switch coords from m to km
+    plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1, vmax=1.5)
+    # ax = sns.heatmap(z, cmap = 'ocean')
+    plt.xlabel('Longitude ($^\circ$)')
+    plt.ylabel('Lattitude ($^\circ$)')
+    plt.title(f'{variable_name} - {plot_of}')
+    if variable_name == 'Elevation':
+        units = '$m$'
+    elif variable_name == 'SF' or variable_name == 'VP':
+        units = '$m^2 s^{-1}$'
+    else:
+        units = '$ms^{-1}$'
+    plt.colorbar(label=f'{variable_name} ({units})')
+    plt.savefig(f'plots/{plot_of}{variable_name}.png')
+    plt.show()
+
+def contour_vbi(x, y, z, plot_of: str, variable_name: str):
+    # 2D contour plot of one variable
+    # switch coords from m to km
+    plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1.5, vmax=1.5)
+    # ax = sns.heatmap(z, cmap = 'ocean')
+    plt.xlabel('Longitude ($^\circ$)')
+    plt.ylabel('Lattitude ($^\circ$)')
+    plt.title(f'{variable_name} - {plot_of}')
+    if variable_name == 'Elevation':
+        units = '$m$'
+    elif variable_name == 'SF' or variable_name == 'VP':
+        units = '$m^2 s^{-1}$'
+    else:
+        units = '$ms^{-1}$'
+    plt.colorbar(label=f'{variable_name} ({units})')
+    plt.savefig(f'plots/{plot_of}{variable_name}.png')
+    plt.show()
+
 def plot_one_convergence(x_it, plot_of):
     """
     Plot convergence of the cost function/gradient norm at a certain cycle during the assimilation routine.

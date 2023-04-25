@@ -31,7 +31,6 @@ def vel_from_helm(sf, vp, dx, dy):
     v_vp = 1 / dy * (vp[1:, 1:-1] - vp[:-1, 1:-1])
     # find v
     v = v_sf + v_vp
-    #u, v = zonal_boundary(u), meridional_boundary(v)
     return u, v
 
 def U_transform(d_eta, sf_u, vp_u, du_mean, dv_mean, dx, dy, u_lat, v_lat):
@@ -59,7 +58,60 @@ def U_transform(d_eta, sf_u, vp_u, du_mean, dv_mean, dx, dy, u_lat, v_lat):
     du = du_u + du_b + du_mean
     dv = dv_u + dv_b + dv_mean
 
-    # apply boundary condition
-    #du, dv = zonal_boundary(du), meridional_boundary(dv)
+    return d_eta, du, dv
+
+def vel_from_helm_gyre(sf, vp, dx, dy):
+    """
+    Transform stream function and velocity potential to horizontal velocity vectors, based on Helmholtz theorem.
+    u = - d sf/dy + d vp/dx
+    v =  d sf/dx + d vp/dy
+    Inputs:  - sf, streamfunction matrix (ny+1, nx+1)
+             - vp, velocity potential matrix (ny+1, nx+1)
+             - dx, dy, spatial grid length
+    Outputs: - u, v, horizontal velocity matrices (ny, nx), (ny, nx)
+    """
+    # y-derivative of streamfunction
+    u_sf = 1 / dy * (sf[1:, 1:] - sf[:-1, 1:]) #dzdy(sf, dy)[:, 1:]
+    #print(u_sf)
+    # x-derivative of velocity potential
+    u_vp = 1 / dx * (vp[:-1, 1:] - vp[:-1, :-1]) #dzdx(vp, dx)[:-1, :]
+    #print(u_vp)
+    # find u
+    u = - u_sf + u_vp
+
+    # x-derivative of streamfunction
+    v_sf = 1 / dx * (sf[1:, 1:] - sf[1:, :-1]) #dzdx(sf, dx)[1:, :]
+    #print(v_sf)
+    # y-derivative of velocity potential
+    v_vp = 1 / dy * (vp[1:, :-1] - vp[:-1, :-1]) #dzdy(vp, dy)[:, :-1]
+    #print(v_vp)
+    # find v
+    v = v_sf + v_vp
+    return u, v
+
+def U_transform_gyre(d_eta, sf_u, vp_u, du_mean, dv_mean, dx, dy, u_lat, v_lat):
+    """
+    The U-transform from control variables (elevation, unbalanced streamfunction and unbalanced velocity
+    potential) to model variables (elevation, zonal velocity and meridional velocity).
+    dx = U dz
+    x = (eta, u, v) and z = (eta, sf, vp)
+    Inputs:  - d_eta, elevation increment
+             - sf_u, unbalanced streamfunction increment matrix (ny+1, nx+1)
+             - vp_u, unbalanced velocity potential increment matrix (ny+1, nx+1)
+             - du_mean, mean zonal velocity
+             - dv_mean, mean meridional velocity
+             - dx, dy, spatial grid length
+    Outputs: - du, dv, horizontal velocity matrices (ny, nx), (ny, nx)
+    """
+    # Find the unbalanced velocities from unbalanced sf and vp
+    du_u, dv_u = vel_from_helm(sf_u, vp_u, dx, dy)
+
+    # Use geostrophic balance to find the balanced velocities
+    du_b = geostrophic_balance_D(d_eta, 'u', u_lat, dy)
+    dv_b = geostrophic_balance_D(d_eta, 'v', v_lat, dx)
+
+    # Find the full velocities
+    du = du_u + du_b + du_mean
+    dv = dv_u + dv_b + dv_mean
 
     return d_eta, du, dv

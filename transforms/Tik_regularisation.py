@@ -169,19 +169,9 @@ def tik_reg(alpha, u, v, dy, dx, ny, nx, conv=None):
     """
 
     # put u and v into a vector
-    #print(u)
     u.set_fill_value(0)
     v.set_fill_value(0)
-    #print(u.get_fill_value())
-    #print(u.view(ma.MaskedArray))
-    #print(type(u))
-    #print(v)
-    #print(u.flatten())
-    #print(v.flatten())
     b = ma.append(u.flatten(), v.flatten())
-    #print(b)
-    #print(b[200:300])
-    #print(b[400:450])
     # input x is a vector
     # costfunction
     def tik_fun(x):
@@ -221,6 +211,155 @@ def tik_reg(alpha, u, v, dy, dx, ny, nx, conv=None):
         ans, cf_list, grad_list = result
         x_arr = np.asarray(ans.x)
         sf, vp = split_x(x_arr, ny_cv, nx_cv)
+        cf_array = np.asarray(cf_list)
+        grad_array = np.asarray(grad_list)
+        return sf, vp, cf_array, grad_array
+
+#######################################################################################################################
+def split(x, ny, nx):
+    """
+    Split vector x into two equally sized matrices.
+    Inputs:  x, input vector
+             ny, nx, number of eta points on the grid (ny, nx)
+    Outputs: sf, streamfunction (ny+2, nx+2)
+             vp, velocity potential (ny+2, nx+2)
+    """
+    # split x into two equal arrays for sf and vp
+    vec_1, vec_2 = np.split(x, 2)
+
+    # reshape into matrices
+    mat_1, mat_2 = np.reshape(vec_1, (ny, nx)), np.reshape(vec_2, (ny, nx))
+    return mat_1, mat_2
+
+
+def A_operator_gyre(x, dy, dx, ny, nx):
+    """
+    The linear operator Ax for the transform from stream function and velocity potential (x) to horizontal velocity vectors (b).
+    Inputs:  - x, vector containing sf (streamfunction) and vp (velocity potential) (2* ny_cv*nx_cv = 2* ny+2 * nx+2)
+             - dy, dx, spatial grid length
+             - ny_cv, nx_cv, number of sf and vp points on the grid (ny_cv, nx_cv)
+    Outputs: - b, vector containing the horizontal velocities, u and v (ny*(nx+1) + nx*(ny+1))
+    """
+    # split x into two equal arrays for sf and vp
+    sf, vp = split(x, ny+1, nx+1)
+
+    # apply the u-transform
+    u, v = vel_from_helm_gyre(sf, vp, dx, dy)
+    # flatten to a vector
+    u_vec = u.flatten()
+    v_vec = v.flatten()
+
+    # created one vector containing both u and v
+    b = np.append(u_vec, v_vec)
+    return b
+
+
+def A_adjoint_gyre(b, dy, dx, ny, nx):
+    """
+    The adjoint of linear operator Ax.
+    Inputs:  - b, vector containing the horizontal velocities, u and v (2*ny*nx)
+             - dy, dx, spatial grid length
+             - ny, nx, number of eta points on the grid
+    Outputs: - x, vector containing sf (streamfunction) and vp (velocity potential) (2 *(ny+1)*(nx+1))
+    """
+    # split b into two equal arrays for u and v
+    u, v = split(b, ny, nx)
+
+    # sizes of sf and vp
+    ny_cv, nx_cv = ny + 1, nx + 1
+
+    # initialise sf and vp
+    sf, vp = np.zeros((ny_cv, nx_cv)), np.zeros((ny_cv, nx_cv))
+
+    v_dx = 1 / dx * v
+    v_dy = 1 / dy * v
+
+    ## adjoint routine begins
+
+    # adjoint of v =  d sf/dx + d vp/dy
+    vp[:-1, :-1] += - v_dy
+    vp[1:, :-1] += v_dy
+    sf[1:, :-1] += - v_dx
+    sf[1:, 1:] += v_dx
+
+    v = 0
+
+    u_dy = 1 / dy * u
+    u_dx = 1 / dx * u
+
+    # adjoint of u =  -d sf/dy + d vp/dx
+    vp[:-1, :-1] += - u_dx
+    vp[:-1, 1:] += u_dx
+    sf[:-1, 1:] += - u_dy
+    sf[1:, 1:] += u_dy
+
+    u = 0
+
+    # flatten to a vector
+    sf_vec = sf.flatten()
+    vp_vec = vp.flatten()
+
+    # created one vector containing both sf and vp
+    x = np.append(sf_vec, vp_vec)
+    return x
+
+def tik_reg_gyre(alpha, u, v, dy, dx, ny, nx, conv=None):
+    """
+    Tikhonov's regularisation to find the horizontal velocity vectors from streamfunction and velocity potential
+    Inputs: alpha, regularisation parameter
+            u, v, horizontal velocity vectors
+            dy, dx, spatial grid length
+            ny, nx, number of eta points on the grid (ny, nx)
+            conv, None - output only minimised value
+                  Convergence - output minimised value, values of fn and grad-norm at each iteration
+    Outputs: sf, streamfunction (ny+1, nx+1)
+             vp, velocity potential (ny+1, nx+1)
+    """
+
+    # put u and v into a vector
+    u.set_fill_value(0)
+    v.set_fill_value(0)
+
+    b = ma.append(u.flatten(), v.flatten())
+    # input x is a vector
+    # costfunction
+    def tik_fun(x):
+        # J_a = 0.5* (b-Ax)^T(b-Ax) + a*0.5*x^Tx
+        J_x = b - A_operator_gyre(x, dy, dx, ny, nx)
+        J = ma.dot(J_x, J_x)
+        J_reg = alpha * ma.dot(x, x)
+        return 0.5 * (J + J_reg)
+
+    # gradient
+    def tik_grad(x):
+        # grad_J = -A^T(b-Ax) + a*x
+        # b-Ax
+        J_x = b - A_operator_gyre(x, dy, dx, ny, nx)
+        # adjoint applied to b-Ax
+        adj = A_adjoint_gyre(J_x, dy, dx, ny, nx)
+        return -adj + alpha * x
+
+    # sizes of sf and vp
+    ny_cv, nx_cv = ny + 1, nx + 1
+
+    # initial guess for minimisation
+    #x_0 = np.zeros(2*ny_cv*nx_cv)
+    x_0 = np.ones(2*ny_cv*nx_cv)
+    cf = tik_fun(x_0)
+    print(f' Value of the initial cost function {cf} at x = {x_0}.')
+    gcf = tik_grad(x_0)
+    print(f' Value of the initial gradient {gcf} at x = {x_0}.')
+
+    result = min_method(tik_fun, tik_grad, x_0, conv)  # use pre-defined fn to optimise
+
+    if conv is None:
+        x_arr = np.asarray(result.x)
+        sf, vp = split(x_arr, ny_cv, nx_cv)
+        return sf, vp
+    elif conv == 'convergence':
+        ans, cf_list, grad_list = result
+        x_arr = np.asarray(ans.x)
+        sf, vp = split(x_arr, ny_cv, nx_cv)
         cf_array = np.asarray(cf_list)
         grad_array = np.asarray(grad_list)
         return sf, vp, cf_array, grad_array

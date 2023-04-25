@@ -186,3 +186,33 @@ def contour_err(x, y, z, plot_of: str, variable_name: str):
     plt.clim(0, 20)
     plt.savefig(f'plots/error_{variable_name}.png')
     plt.show()
+
+def plot_gradient_test(alpha, Phi):
+    """
+    Plot the values of the gradient for the gradient test of the cost function in 3D VAR.
+    Inputs:  alpha, values tending towards zero
+             Phi, value of the gradient test
+    """
+    plt.plot(alpha, Phi)
+    plt.xlabel('alpha')
+    # plt.xlim(alpha[0], alpha[-1])
+    plt.xscale('log')
+    plt.ylabel('Phi(alpha)')
+    plt.savefig('sweGradientTest.png')
+    plt.show()
+
+
+def plot_minus_gradient_test(alpha, one_min_Phi):
+    """
+    Plot the 1 minus the values of the gradient for the gradient test of the cost function in 3D VAR.
+    Inputs:  alpha, values tending towards zero
+             one_min_Phi, 1 minus value of the gradient test
+    """
+    plt.plot(alpha, abs(one_min_Phi))
+    plt.xlabel('alpha')
+    # plt.xlim(alpha[0], alpha[-1])
+    plt.xscale('log')
+    plt.ylabel('1 - Phi(alpha)')
+    plt.yscale('log')
+    plt.savefig('sweGradientTestMinus.png')
+    plt.show()

@@ -1,6 +1,9 @@
 """
-
+Gradient tests for the gradient of cost functions used in:
+ - Tikhonov's regularisation for the gyre configuration.
+@author: Laura Risley 2023
 """
+
 import numpy as np
 import numpy.linalg as la
 
@@ -38,10 +41,9 @@ def gradient_gyre_test():
     Phi(a) = (J(x+ah) - J(x)) / ah^T gJ(x) = 1 + O(a)
     plot Phi(a) as a tends to zero
     h should be of unit length, h = gJ(x)/norm(g(J(x)), take the 2-norm
-
     Output: - plot of Phi(a) and 1-Phi(a) as a tends to zero
     """
-
+    # what gyre time to look at (this does not matter)
     time_index = 289
 
     # netcdf file locations
@@ -70,7 +72,6 @@ def gradient_gyre_test():
     dy, dx = param['dy'], param['dx']
 
     b = np.append(u_diff.flatten(), v_diff.flatten())
-    print(f'Found perturbations of the velocities.')
 
     ## Find streamfunction and velocity potential perturbations
     # set a value of alpha, tikhonov regularisation parameter

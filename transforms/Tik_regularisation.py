@@ -216,20 +216,34 @@ def tik_reg(alpha, u, v, dy, dx, ny, nx, conv=None):
         return sf, vp, cf_array, grad_array
 
 #######################################################################################################################
-def split(x, ny, nx):
+def split_x_gyre(x, ny_cv, nx_cv):
     """
-    Split vector x into two equally sized matrices.
-    Inputs:  x, input vector
+    Split vector x into two matrices for stream function and velocity potential
+    Inputs:  x, vector containing sf (streamfunction) and vp (velocity potential) (2*(ny+2)*(nx+2))
              ny, nx, number of eta points on the grid (ny, nx)
     Outputs: sf, streamfunction (ny+2, nx+2)
              vp, velocity potential (ny+2, nx+2)
     """
     # split x into two equal arrays for sf and vp
-    vec_1, vec_2 = np.split(x, 2)
+    sf, vp = np.split(x, 2)
+    # reshape sf and vp into matrices
+    sf, vp = np.reshape(sf, (ny_cv, nx_cv)), np.reshape(vp, (ny_cv, nx_cv))
+    return sf, vp
 
-    # reshape into matrices
-    mat_1, mat_2 = np.reshape(vec_1, (ny, nx)), np.reshape(vec_2, (ny, nx))
-    return mat_1, mat_2
+
+def split_b_gyre(b, ny, nx):
+    """
+    Split vector b into two matrices for zonal and meridional velocity
+    Inputs:  b, vector containing the zonal and meridional velocity ((ny)*(nx+1) + (ny+1)*(nx))
+             ny, nx, number of eta points on the grid (ny, nx)
+    Outputs: u, zonal velocity (ny, nx+1)
+             v, meridional velocity  (ny+1, nx)
+    """
+    # split b into two arrays for u and v
+    u, v = np.split(b, 2)
+    # reshape sf and vp into matrices
+    u, v = np.reshape(u, (ny, nx)), np.reshape(v, (ny, nx))
+    return u, v
 
 
 def A_operator_gyre(x, dy, dx, ny, nx):
@@ -241,10 +255,10 @@ def A_operator_gyre(x, dy, dx, ny, nx):
     Outputs: - b, vector containing the horizontal velocities, u and v (ny*(nx+1) + nx*(ny+1))
     """
     # split x into two equal arrays for sf and vp
-    sf, vp = split(x, ny+1, nx+1)
+    sf, vp = split_x_gyre(x, ny+1, nx+1)
 
     # apply the u-transform
-    u, v = vel_from_helm_gyre(sf, vp, dx, dy)
+    u, v = vel_from_helm_gyre(sf, vp, dy, dx)
     # flatten to a vector
     u_vec = u.flatten()
     v_vec = v.flatten()
@@ -263,7 +277,7 @@ def A_adjoint_gyre(b, dy, dx, ny, nx):
     Outputs: - x, vector containing sf (streamfunction) and vp (velocity potential) (2 *(ny+1)*(nx+1))
     """
     # split b into two equal arrays for u and v
-    u, v = split(b, ny, nx)
+    u, v = split_b_gyre(b, ny, nx)
 
     # sizes of sf and vp
     ny_cv, nx_cv = ny + 1, nx + 1
@@ -271,8 +285,8 @@ def A_adjoint_gyre(b, dy, dx, ny, nx):
     # initialise sf and vp
     sf, vp = np.zeros((ny_cv, nx_cv)), np.zeros((ny_cv, nx_cv))
 
-    v_dx = 1 / dx * v
     v_dy = 1 / dy * v
+    v_dx = 1 / dx * v
 
     ## adjoint routine begins
 
@@ -290,8 +304,8 @@ def A_adjoint_gyre(b, dy, dx, ny, nx):
     # adjoint of u =  -d sf/dy + d vp/dx
     vp[:-1, :-1] += - u_dx
     vp[:-1, 1:] += u_dx
-    sf[:-1, 1:] += - u_dy
-    sf[1:, 1:] += u_dy
+    sf[:-1, 1:] += u_dy
+    sf[1:, 1:] += - u_dy
 
     u = 0
 
@@ -321,6 +335,7 @@ def tik_reg_gyre(alpha, u, v, dy, dx, ny, nx, conv=None):
     v.set_fill_value(0)
 
     b = ma.append(u.flatten(), v.flatten())
+
     # input x is a vector
     # costfunction
     def tik_fun(x):
@@ -343,8 +358,8 @@ def tik_reg_gyre(alpha, u, v, dy, dx, ny, nx, conv=None):
     ny_cv, nx_cv = ny + 1, nx + 1
 
     # initial guess for minimisation
-    #x_0 = np.zeros(2*ny_cv*nx_cv)
-    x_0 = np.ones(2*ny_cv*nx_cv)
+    x_0 = np.zeros(2*ny_cv*nx_cv)
+    #x_0 = 300*np.ones(2*ny_cv*nx_cv)
     cf = tik_fun(x_0)
     print(f' Value of the initial cost function {cf} at x = {x_0}.')
     gcf = tik_grad(x_0)
@@ -354,12 +369,12 @@ def tik_reg_gyre(alpha, u, v, dy, dx, ny, nx, conv=None):
 
     if conv is None:
         x_arr = np.asarray(result.x)
-        sf, vp = split(x_arr, ny_cv, nx_cv)
+        sf, vp = split_x_gyre(x_arr, ny_cv, nx_cv)
         return sf, vp
     elif conv == 'convergence':
         ans, cf_list, grad_list = result
         x_arr = np.asarray(ans.x)
-        sf, vp = split(x_arr, ny_cv, nx_cv)
+        sf, vp = split_x_gyre(x_arr, ny_cv, nx_cv)
         cf_array = np.asarray(cf_list)
         grad_array = np.asarray(grad_list)
         return sf, vp, cf_array, grad_array

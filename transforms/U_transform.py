@@ -60,7 +60,7 @@ def U_transform(d_eta, sf_u, vp_u, du_mean, dv_mean, dx, dy, u_lat, v_lat):
 
     return d_eta, du, dv
 
-def vel_from_helm_gyre(sf, vp, dx, dy):
+def vel_from_helm_gyre(sf, vp, dy, dx):
     """
     Transform stream function and velocity potential to horizontal velocity vectors, based on Helmholtz theorem.
     u = - d sf/dy + d vp/dx
@@ -71,25 +71,22 @@ def vel_from_helm_gyre(sf, vp, dx, dy):
     Outputs: - u, v, horizontal velocity matrices (ny, nx), (ny, nx)
     """
     # y-derivative of streamfunction
-    u_sf = 1 / dy * (sf[1:, 1:] - sf[:-1, 1:]) #dzdy(sf, dy)[:, 1:]
-    #print(u_sf)
+    dsf_dy = 1 / dy * (sf[1:, 1:] - sf[:-1, 1:]) #dzdy(sf, dy)[:, 1:]
     # x-derivative of velocity potential
-    u_vp = 1 / dx * (vp[:-1, 1:] - vp[:-1, :-1]) #dzdx(vp, dx)[:-1, :]
-    #print(u_vp)
+    dvp_dx = 1 / dx * (vp[:-1, 1:] - vp[:-1, :-1]) #dzdx(vp, dx)[:-1, :]
     # find u
-    u = - u_sf + u_vp
+    u = - dsf_dy + dvp_dx
 
     # x-derivative of streamfunction
     v_sf = 1 / dx * (sf[1:, 1:] - sf[1:, :-1]) #dzdx(sf, dx)[1:, :]
-    #print(v_sf)
     # y-derivative of velocity potential
     v_vp = 1 / dy * (vp[1:, :-1] - vp[:-1, :-1]) #dzdy(vp, dy)[:, :-1]
-    #print(v_vp)
     # find v
     v = v_sf + v_vp
+    u[:, -2], v[-2, :] = 0,0
     return u, v
 
-def U_transform_gyre(d_eta, sf_u, vp_u, du_mean, dv_mean, dx, dy, u_lat, v_lat):
+def U_transform_gyre(d_eta, sf_u, vp_u, du_mean, dv_mean, dy, dx, u_lat, v_lat):
     """
     The U-transform from control variables (elevation, unbalanced streamfunction and unbalanced velocity
     potential) to model variables (elevation, zonal velocity and meridional velocity).

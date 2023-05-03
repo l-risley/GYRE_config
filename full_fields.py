@@ -61,9 +61,45 @@ def plots_full():
         #contour(u_lon, u_lat, u, f'time_{time[time_index]}', 'Zonal Velocity')
         contour(v_lon, v_lat, v, f'time_{time[time_index]}', 'Meridional Velocity')
 
+def plots_1000yrs():
+    """
+    """
+    # netcdf file locations
+    input_file = "/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/model_output_1000yrs.nc"
+
+    # lon and lat for each grid
+    lon, lat, time = read_file_info(input_file)
+
+    print(f'Lattitude : {np.shape(lat)} and longitude : {np.shape(lon)}.')
+
+    num_times = np.size(time)
+    print(num_times)
+    """
+    for time_index in range(num_times - 1):
+        print(f'Plots at {time_index}')
+        eta = read_file(input_file, "sossheig", time_index=time_index)
+        u = read_file(input_file, "vozocrtx", time_index=time_index)[0]
+        v = read_file(input_file, "vomecrty", time_index=time_index)[0]
+
+        contour(lon, lat, eta, f'time_{time[time_index]}', 'Elevation')
+        contour(lon, lat, u, f'time_{time[time_index]}', 'Zonal Velocity')
+        contour(lon, lat, v, f'time_{time[time_index]}', 'Meridional Velocity')
+        """
+    time_index = 0
+    eta = read_file(input_file, "sshn", time_index=time_index)
+    #u = read_file(input_file, "vozocrtx", time_index=time_index)[0]
+    #v = read_file(input_file, "vomecrty", time_index=time_index)[0]
+
+    # time in years
+    yr = time[time_index] #/ 3.154e7
+    contour(lon, lat, eta, f'{yr}', 'Elevation')
+    #contour(lon, lat, u, f'{yr}yrs', 'Zonal Velocity')
+    #contour(lon, lat, v, f'{yr}yrs', 'Meridional Velocity')
+
 if __name__ == '__main__':
     # time to plot
     time_index = 0
     #one_plot(time_index)
-    plots_full()
+    #plots_full()
+    plots_1000yrs()
 

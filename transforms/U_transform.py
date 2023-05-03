@@ -83,7 +83,7 @@ def vel_from_helm_gyre(sf, vp, dy, dx):
     v_vp = 1 / dy * (vp[1:, :-1] - vp[:-1, :-1]) #dzdy(vp, dy)[:, :-1]
     # find v
     v = v_sf + v_vp
-    u[:, -2], v[-2, :] = 0,0
+    #u[:, -2], v[-2, :] = 0,0
     return u, v
 
 def U_transform_gyre(d_eta, sf_u, vp_u, du_mean, dv_mean, dy, dx, u_lat, v_lat):

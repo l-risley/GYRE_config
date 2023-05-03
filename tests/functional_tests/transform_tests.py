@@ -64,13 +64,13 @@ def tikhonov_test():
 
     dy, dx = param['dy'], param['dx']
 
-    ny, nx = np.shape(u_0)
+    ny, nx = np.shape(u_0[2:-2, 2:-2])
     # alpha, tikhonov regularisation parameter
     alpha = 0 #1e-10
 
     # choice of convergence
     conv = None  # 'convergence'
-    sf, vp = tik_reg_gyre(alpha, u_0, v_0, dy, dx, ny, nx, conv)
+    sf, vp = tik_reg_gyre(alpha, u_0[2:-2, 2:-2], v_0[2:-2, 2:-2], dy, dx, ny, nx, conv)
     print(f' The shape of sf is {np.shape(sf)}.')
     print(f' The shape of vp is {np.shape(vp)}.')
 
@@ -83,8 +83,8 @@ def tikhonov_test():
     print(f' The shape of sf new is {np.shape(sf_new)}.')
     print(f' The shape of vp new is {np.shape(vp_new)}.')
 
-    contour(lon, lat, sf_new, 'Full', 'SF')
-    contour(lon, lat, vp_new, 'Full', 'VP')
+    contour(lon[2:-2, 2:-2], lat[2:-2, 2:-2], sf_new, 'Full', 'SF')
+    contour(lon[2:-2, 2:-2], lat[2:-2, 2:-2], vp_new, 'Full', 'VP')
 
 if __name__ == '__main__':
     #vel_from_helm_test()

@@ -180,20 +180,23 @@ def balance_plots(time_index):
     u = read_file(u_input_file, "vozocrtx", time_index=time_index)[0]
     v = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
 
+    eta_mask, u_mask, v_mask = eta.mask, u.mask, v.mask
+
     # lon and lat for each grid
     eta_lon, eta_lat, time = read_file_info(eta_input_file)
     u_lon, u_lat, time = read_file_info(u_input_file)
     v_lon, v_lat, time = read_file_info(v_input_file)
 
     # Use geostrophic balance to find the balanced velocities
-    u_b = geostrophic_balance(eta, 'u', u_lat, dy)
-    v_b = geostrophic_balance(eta, 'v', v_lat, dx)
+    u_b = geostrophic_balance(eta, 'u', u_lat, dy, u_mask)
+    v_b = geostrophic_balance(eta, 'v', v_lat, dx, v_mask)
 
     # Find the unbalanced components of the velocities
     u_u = u - u_b
     v_u = v - v_b
 
     # plot full fields, and balanced and unbalanced components
+    contour(eta_lon, eta_lat, eta, f'at time {time[time_index]}', 'Elevation')
     contour_bu(u_lon, u_lat, u, f'at time {time[time_index]}', 'Full Zonal V')
     contour_bv(v_lon, v_lat, v, f'at time {time[time_index]}', 'Full Meridional V')
 
@@ -217,13 +220,14 @@ def balance_plots(time_index):
 
     # balanced components
     # Use geostrophic balance to find the balanced velocities
-    du_b = geostrophic_balance(eta_diff, 'u', u_lat, dy)
-    dv_b = geostrophic_balance(eta_diff, 'v', v_lat, dx)
+    du_b = geostrophic_balance(eta_diff, 'u', u_lat, dy, u_mask)
+    dv_b = geostrophic_balance(eta_diff, 'v', v_lat, dx,  v_mask)
 
     # Find the unbalanced components of the velocities
     du_u = u_diff - du_b
     dv_u = v_diff - dv_b
     # plot full fields, and balanced and unbalanced components
+    contour(eta_lon, eta_lat, eta_diff, f'at time {time[time_index]}', 'Elevation Increment')
     contour_ubi(u_lon, u_lat, u_diff, f'at time {time[time_index]}', 'Zonal V Increment')
     contour_vbi(v_lon, v_lat, v_diff, f'at time {time[time_index]}', 'Meridional V Increment')
 
@@ -352,7 +356,7 @@ if __name__ == '__main__':
     # time to plot
     time_index = 700
     conv = 'convergence'
-    transform_plots(alpha, time_index, conv)
-    control_plots(alpha, time_index)
-    #balance_plots(time_index)
+    #transform_plots(alpha, time_index, conv)
+    #control_plots(alpha, time_index)
+    balance_plots(time_index)
 

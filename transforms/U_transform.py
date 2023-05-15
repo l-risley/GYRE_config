@@ -60,7 +60,7 @@ def U_transform(d_eta, sf_u, vp_u, du_mean, dv_mean, dx, dy, u_lat, v_lat):
 
     return d_eta, du, dv
 
-def vel_from_helm_gyre(sf, vp, dy, dx):
+def vel_from_helm_gyre(sf, vp, dy, dx, u_mask, v_mask):
     """
     Transform stream function and velocity potential to horizontal velocity vectors, based on Helmholtz theorem.
     u = - d sf/dy + d vp/dx
@@ -68,6 +68,7 @@ def vel_from_helm_gyre(sf, vp, dy, dx):
     Inputs:  - sf, streamfunction matrix (ny+1, nx+1)
              - vp, velocity potential matrix (ny+1, nx+1)
              - dx, dy, spatial grid length
+             - u_mask, v_mask, masks applied to the velocities
     Outputs: - u, v, horizontal velocity matrices (ny, nx), (ny, nx)
     """
     # y-derivative of streamfunction
@@ -84,9 +85,9 @@ def vel_from_helm_gyre(sf, vp, dy, dx):
     # find v
     v = v_sf + v_vp
     #u[:, -2], v[-2, :] = 0,0
-    return u, v
+    return ma.array(u, mask=u_mask), ma.array(v, mask=v_mask)
 
-def U_transform_gyre(d_eta, sf_u, vp_u, du_mean, dv_mean, dy, dx, u_lat, v_lat):
+def U_transform_gyre(d_eta, sf_u, vp_u, du_mean, dv_mean, dy, dx, u_lat, v_lat, u_mask, v_mask):
     """
     The U-transform from control variables (elevation, unbalanced streamfunction and unbalanced velocity
     potential) to model variables (elevation, zonal velocity and meridional velocity).
@@ -98,14 +99,15 @@ def U_transform_gyre(d_eta, sf_u, vp_u, du_mean, dv_mean, dy, dx, u_lat, v_lat):
              - du_mean, mean zonal velocity
              - dv_mean, mean meridional velocity
              - dx, dy, spatial grid length
+             - u_mask, v_mask, masks applied to the velocities
     Outputs: - du, dv, horizontal velocity matrices (ny, nx), (ny, nx)
     """
     # Find the unbalanced velocities from unbalanced sf and vp
-    du_u, dv_u = vel_from_helm(sf_u, vp_u, dx, dy)
+    du_u, dv_u = vel_from_helm_gyre(sf_u, vp_u, dx, dy, u_mask, v_mask)
 
     # Use geostrophic balance to find the balanced velocities
-    du_b = geostrophic_balance_D(d_eta, 'u', u_lat, dy)
-    dv_b = geostrophic_balance_D(d_eta, 'v', v_lat, dx)
+    du_b = geostrophic_balance(d_eta, 'u', u_lat, dy, u_mask)
+    dv_b = geostrophic_balance(d_eta, 'v', v_lat, dx, v_mask)
 
     # Find the full velocities
     du = du_u + du_b + du_mean

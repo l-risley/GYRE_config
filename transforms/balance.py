@@ -12,11 +12,55 @@ v_surface = g/f dndx
 https://uw.pressbooks.pub/ocean285/chapter/geostrophic-balance/
 @author : Laura Risley, 2022
 """
+import mmap
 
 import numpy as np
+import numpy.ma as ma
 from general_functions import *
 from gyre_setup import *
 
+def geostrophic_balance(eta: np.ndarray, vel: str, lat, dz, mask):
+    """
+    Use geostrophic balance to find the horizontal velocity vectors.
+    Inputs: eta, elevation
+            vel, either 'u' or 'v'
+            lat, lattitude coordinates
+            dz, spatial grid length (either dy or dx)
+    Output: u/v, the horizontal velocity vector
+    """
+    print('Calculating geostrophic balance.')
+    f_0, g, beta = f0_calc(), param['g'], beta_calc()
+    if vel == 'u':
+        dy = dz
+        # find dndy on the v grid
+        dndy = dzdy(eta, dy)
+        ## interp to the u grid using four point averaging
+        # u will have the same shape as eta, with zeros on the boundary
+        dndy[[0, -1], :] = 0
+        dndy_ugrid = np.zeros_like(eta)
+        dndy_ugrid[1:-1, :-1] = interp_merid(interp_zonal(dndy))
+        ## calculate the coriolis term on the u grid
+        # f = f0 + by where y is the distance between the most southern point (where f) is calculated).
+        cor = f_0 + beta * ((lat - param['phi0']) * param['rad'])
+        u_bal = - g * np.divide(dndy_ugrid, cor)
+        return ma.array(u_bal, mask=mask)
+
+    elif vel == 'v':
+        dx = dz
+        # find dndx on the u grid
+        dndx = dzdx(eta, dx)
+        dndx[:, [0, -1]] = 0
+        ## interp to the v grid using four point averaging
+        # v will have the same shape as eta, with zeros on the boundary
+        dndx_vgrid = np.zeros_like(eta)
+        dndx_vgrid[:-1, 1:-1] = interp_zonal(interp_merid(dndx))
+        ## calculate the coriolis term on the vgrid
+        # f = f0 + by where y is the distance between the most southern point (where f) is calculated).
+        cor = f_0 + beta * ((lat - param['phi0']) * param['rad'])
+        v_bal = g * np.divide(dndx_vgrid, cor)
+        return ma.array(v_bal, mask=mask)
+
+#######################################################################################################################
 
 def geostrophic_balance_D(eta: np.ndarray, vel: str, lat, dz):
     """
@@ -53,42 +97,4 @@ def geostrophic_balance_D(eta: np.ndarray, vel: str, lat, dz):
         dndx_vgrid = interp_merid(dndx)
         # calculate the coriolis term on v-grid
         cor = f_0 + beta * lat
-        return g * np.divide(dndx_vgrid, cor)
-
-
-def geostrophic_balance(eta: np.ndarray, vel: str, lat, dz):
-    """
-    Use geostrophic balance to find the horizontal velocity vectors.
-    Inputs: eta, elevation
-            vel, either 'u' or 'v'
-            lat, lattitude coordinates
-            dz, spatial grid length (either dy or dx)
-    Output: u/v, the horizontal velocity vector
-    """
-    print('Calculating geostrophic balance.')
-    f_0, g, beta = f0_calc(), param['g'], beta_calc()
-    if vel == 'u':
-        dy = dz
-        # find dndy on the v grid
-        dndy = dzdy(eta, dy)
-        ## interp to the u grid using four point averaging
-        # u will have the same shape as eta, with zeros on the boundary
-        dndy_ugrid = np.zeros_like(eta)
-        dndy_ugrid[1:-1, :-1] = interp_merid(interp_zonal(dndy))
-        ## calculate the coriolis term on the u grid
-        # f = f0 + by where y is the distance between the most southern point (where f) is calculated).
-        cor = f_0 + beta * ((lat - param['phi0']) * param['rad'])
-        return - g * np.divide(dndy_ugrid, cor)
-
-    elif vel == 'v':
-        dx = dz
-        # find dndx on the u grid
-        dndx = dzdx(eta, dx)
-        ## interp to the v grid using four point averaging
-        # v will have the same shape as eta, with zeros on the boundary
-        dndx_vgrid = np.zeros_like(eta)
-        dndx_vgrid[:-1, 1:-1] = interp_zonal(interp_merid(dndx))
-        ## calculate the coriolis term on the vgrid
-        # f = f0 + by where y is the distance between the most southern point (where f) is calculated).
-        cor = f_0 + beta * ((lat - param['phi0']) * param['rad'])
         return g * np.divide(dndx_vgrid, cor)

@@ -48,7 +48,7 @@ def T_transform(d_eta, du, dv, dx, dy, lat_u, lat_v, alpha):
 
     return d_eta, sf_u, vp_u, du_mean, dv_mean
 
-def T_transform_gyre(d_eta, du, dv, dx, dy, lat_u, lat_v, alpha):
+def T_transform_gyre(d_eta, du, dv, dx, dy, lat_u, lat_v, alpha, u_mask, v_mask):
     """
     T-transform from model variables (elevation, zonal velocity and meridional velocity) to control variables
     (elevation, unbalanced streamfunction and unbalanced velocity
@@ -69,8 +69,8 @@ def T_transform_gyre(d_eta, du, dv, dx, dy, lat_u, lat_v, alpha):
     ny, nx = np.shape(d_eta)
 
     # Use geostrophic balance to find the balanced velocities
-    du_b = geostrophic_balance_D(d_eta, 'u', lat_u, dy)
-    dv_b = geostrophic_balance_D(d_eta, 'v', lat_v, dx)
+    du_b = geostrophic_balance(d_eta, 'u', lat_u, dy, u_mask)
+    dv_b = geostrophic_balance(d_eta, 'v', lat_v, dx, v_mask)
 
     # Find the unbalanced components of the velocities
     du_u = du - du_b
@@ -80,7 +80,7 @@ def T_transform_gyre(d_eta, du, dv, dx, dy, lat_u, lat_v, alpha):
     ## Use Tikhonov's regularisation
     # no convergence plots necessary within the T-transform
     conv = None
-    sf_u, vp_u = tik_reg_gyre(alpha, du_u, dv_u, dx, dy, ny, nx, conv)
+    sf_u, vp_u = tik_reg_gyre(alpha, du_u, dv_u, dx, dy, ny, nx, u_mask, v_mask, conv)
 
     # Store the mean values of u and v
     du_mean = du.mean()

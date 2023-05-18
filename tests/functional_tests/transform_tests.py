@@ -73,7 +73,6 @@ def tikhonov_test():
     v_0 = read_file(v_input_file, "vomecrty", time_index=time_index)[0]
     v_1 = read_file(v_input_file, "vomecrty", time_index=time_index + 1)[0]
     v_diff = v_1 - v_0
-    u_mask, v_mask = u_0.mask, v_0.mask
 
     print(f'Found perturbations of the velocities.')
 
@@ -83,6 +82,8 @@ def tikhonov_test():
     dy, dx = param['dy'], param['dx']
 
     ny, nx = np.shape(u_0)
+    """
+    u_mask, v_mask = u_0.mask, v_0.mask
     # alpha, tikhonov regularisation parameter
     alpha = 0  # 1e-10
 
@@ -104,13 +105,15 @@ def tikhonov_test():
     contour(lon, lat, sf_new, 'Full', 'SF')
     contour(lon, lat, vp_new, 'Full', 'VP')
     """
+    u_mask, v_mask = u_0[2:-2, 2:-2].mask, v_0[2:-2, 2:-2].mask
+
     ny, nx = np.shape(u_0[2:-2, 2:-2])
     # alpha, tikhonov regularisation parameter
     alpha = 0 #1e-10
 
     # choice of convergence
     conv = None  # 'convergence'
-    sf, vp = tik_reg_gyre(alpha, u_0[2:-2, 2:-2], v_0[2:-2, 2:-2], dy, dx, ny, nx, conv)
+    sf, vp = tik_reg_gyre(alpha, u_0[2:-2, 2:-2], v_0[2:-2, 2:-2], dy, dx, ny, nx, u_mask, v_mask, conv)
     print(f' The shape of sf is {np.shape(sf)}.')
     print(f' The shape of vp is {np.shape(vp)}.')
 
@@ -125,7 +128,7 @@ def tikhonov_test():
 
     contour(lon[2:-2, 2:-2], lat[2:-2, 2:-2], sf_new, 'Full', 'SF')
     contour(lon[2:-2, 2:-2], lat[2:-2, 2:-2], vp_new, 'Full', 'VP')
-    """
+
 if __name__ == '__main__':
     #vel_from_helm_test()
     tikhonov_test()

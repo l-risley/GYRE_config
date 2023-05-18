@@ -74,27 +74,15 @@ def plots_1000yrs():
 
     num_times = np.size(time)
     print(num_times)
-    """
-    for time_index in range(num_times - 1):
-        print(f'Plots at {time_index}')
-        eta = read_file(input_file, "sossheig", time_index=time_index)
-        u = read_file(input_file, "vozocrtx", time_index=time_index)[0]
-        v = read_file(input_file, "vomecrty", time_index=time_index)[0]
-
-        contour(lon, lat, eta, f'time_{time[time_index]}', 'Elevation')
-        contour(lon, lat, u, f'time_{time[time_index]}', 'Zonal Velocity')
-        contour(lon, lat, v, f'time_{time[time_index]}', 'Meridional Velocity')
-        """
     time_index = 0
     eta = read_file(input_file, "sshn", time_index=time_index)
-    #u = read_file(input_file, "vozocrtx", time_index=time_index)[0]
-    #v = read_file(input_file, "vomecrty", time_index=time_index)[0]
+    u = read_file(input_file, "un", time_index=time_index)[0]
+    v = read_file(input_file, "vn", time_index=time_index)[0]
 
     # time in years
-    yr = time[time_index] #/ 3.154e7
-    contour(lon, lat, eta, f'{yr}', 'Elevation')
-    #contour(lon, lat, u, f'{yr}yrs', 'Zonal Velocity')
-    #contour(lon, lat, v, f'{yr}yrs', 'Meridional Velocity')
+    contour(lon, lat, eta, f'1000yrs', 'Elevation')
+    contour(lon, lat, u, f'1000yrs', 'Zonal Velocity')
+    contour(lon, lat, v, f'1000yrs', 'Meridional Velocity')
 
 if __name__ == '__main__':
     # time to plot

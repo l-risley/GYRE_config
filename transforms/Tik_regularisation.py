@@ -191,9 +191,10 @@ def tik_reg_gyre(alpha, u, v, dy, dx, ny, nx, u_mask, v_mask, conv=None):
     x_0 = np.zeros(2*ny_cv*nx_cv)
     #x_0 = 300*np.ones(2*ny_cv*nx_cv)
     cf = tik_fun(x_0)
-    print(f' Value of the initial cost function {cf} at x = {x_0}.')
+    print(f' Value of the initial cost function: {cf} for x = {x_0}.')
     gcf = tik_grad(x_0)
-    print(f' Value of the initial gradient {gcf} at x = {x_0}.')
+    print(f' Value of the initial gradient: {gcf} for x = {x_0}.')
+    print(f'Value of the initial gradient norm: {norm(gcf)} for x = {x_0}.')
 
     result = min_method(tik_fun, tik_grad, x_0, conv)  # use pre-defined fn to optimise
 

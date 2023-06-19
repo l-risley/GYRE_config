@@ -21,7 +21,7 @@ def plot_corr(corr_matrix, variable_1:str, variable_2: str, lon, lat):
             lat, lattitude coordinates
     """
     x, y = lon, lat
-    plt.pcolormesh(x, y, corr_matrix, cmap='viridis', shading='auto')
+    plt.pcolormesh(x, y, corr_matrix, cmap='bwr', shading='auto')
     plt.xlabel('Longitude ($^\circ$)')
     plt.ylabel('Lattitude ($^\circ$)')
     plt.title(f'Corr of {variable_1} and {variable_2}')
@@ -504,9 +504,9 @@ if __name__ == '__main__':
         # number of samples
         n = 729
         corr_mv(n)
-        corr_mv_increments(n)
-        corr_mv_b_increments(n)
-        corr_mv_ub_increments(n)
-        corr_sf_vp(n)
-        corr_sf_vp_increments(n)
-        corr_cv(n)
+        #corr_mv_increments(n)
+        #corr_mv_b_increments(n)
+        #corr_mv_ub_increments(n)
+        #corr_sf_vp(n)
+        #corr_sf_vp_increments(n)
+        #corr_cv(n)

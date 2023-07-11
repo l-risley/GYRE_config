@@ -3,6 +3,7 @@ Interpolate between different grid resolutions.
 """
 import numpy as np
 import numpy.ma as ma
+import netCDF4
 from scipy.interpolate import griddata
 from read_nemo_fields import *
 from general_functions import *
@@ -68,7 +69,13 @@ def gyre1_gyre12():
     contour(gyre12_u_lon, gyre12_u_lat, gyre12_u, f'Gyre12 1000yrs', 'Zonal Velocity')
     contour(gyre12_v_lon, gyre12_v_lat, gyre12_v, f'Gyre12 1000yrs', 'Meridional Velocity')
 
-    # TODO need to convert to NC files
+    # convert to netcdf files
+    fileid = netCDF4.Dataset('gyre12_restart.nc', 'r+')
+    fileid.variables['sshn'][:] = gyre12_eta
+    fileid.variables['un'][:] = gyre12_u
+    fileid.variables['vn'][:] = gyre12_v
+    fileid.close()
+
 if __name__ == '__main__':
    gyre1_gyre12()
 

@@ -70,10 +70,10 @@ def gyre1_gyre12():
     contour(gyre12_v_lon, gyre12_v_lat, gyre12_v, f'Gyre12 1000yrs', 'Meridional Velocity')
 
     # convert to netcdf files
-    fileid = netCDF4.Dataset('gyre12_restart.nc', 'r+')
+    fileid = netCDF4.Dataset('gyre12_1000yr_restart.nc', 'r+')
     fileid.variables['sshn'][:] = gyre12_eta
-    fileid.variables['un'][:] = gyre12_u
-    fileid.variables['vn'][:] = gyre12_v
+    #fileid.variables['un'][:] = gyre12_u
+    #fileid.variables['vn'][:] = gyre12_v
     fileid.close()
 
 if __name__ == '__main__':

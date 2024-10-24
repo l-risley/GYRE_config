@@ -14,7 +14,7 @@ def contour_gyre(x, y, z, plot_of: str, variable_name: str):
     plt.title(f'{variable_name} - {plot_of}')
     if variable_name == 'Elevation':
         units = '$m$'
-        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1, vmax=1.5)
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')#, vmin=-1, vmax=1.5)
     elif variable_name == 'SF' or variable_name == 'VP':
         units = '$m^2 s^{-1}$'
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')
@@ -23,7 +23,7 @@ def contour_gyre(x, y, z, plot_of: str, variable_name: str):
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')
     else:
         units = '$ms^{-1}$'
-        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-2, vmax=2)
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')#, vmin=-2, vmax=2)
     plt.xlabel('Longitude ($^\circ$)')
     plt.ylabel('Lattitude ($^\circ$)')
     plt.colorbar(label=f'{variable_name} ({units})')
@@ -98,6 +98,85 @@ def plot_gyre12_diff(date1, date2):
     contour_gyre(gyre12_lon, gyre12_lat, diff_u, f'Gyre12 diff from {actual_date2} to {actual_date1}', 'Zonal Velocity')
     contour_gyre(gyre12_lon, gyre12_lat, diff_v, f'Gyre12 diff from {actual_date2} to {actual_date1}', 'Meridional Velocity')
 
+def plot_gyre36():
+    """
+    Plot a gyre36 output.
+    """
+    date = 30100201
+    # netcdf file locations
+    gyre36_input_file = f"/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/gyre36_30100201_restart.nc"
+
+    # lon and lat for each grid
+    gyre36_lon, gyre36_lat, time = read_file_info(gyre36_input_file)
+
+    # gyre36 outputs
+    gyre36_eta = read_file(gyre36_input_file, "sshn")
+    gyre36_u = read_file(gyre36_input_file, "un")[0]
+    gyre36_v = read_file(gyre36_input_file, "vn")[0]
+    gyre36_t = read_file(gyre36_input_file, "tn")[0]
+
+    print(gyre36_t[1, :100])
+    plt.plot(np.arange(0,100),gyre36_t[1, :100])
+    plt.show()
+    # extract the year only
+    year = int(str(date)[:4])
+    actual_date = int(year) - 2000
+
+    # plot gyre36
+    contour_gyre(gyre36_lon, gyre36_lat, gyre36_eta, f'Gyre36 {actual_date} yrs', 'Elevation')
+    contour_gyre(gyre36_lon, gyre36_lat, gyre36_u, f'Gyre36 {actual_date} yrs', 'Zonal Velocity')
+    contour_gyre(gyre36_lon, gyre36_lat, gyre36_v, f'Gyre36 {actual_date} yrs', 'Meridional Velocity')
+    contour_gyre(gyre36_lon, gyre36_lat, gyre36_t, f'Gyre36 {actual_date} yrs', 'Temperature')
+
+def contour_gyre_inv(x, y, z, plot_of: str, variable_name: str, exp:str):
+    # 2D contour_gyre plot of one variable
+    # switch coords from m to km
+    plt.title(f'{plot_of} - Experiment {exp}')
+    if variable_name == 'SF' or variable_name == 'VP':
+        units = '$m^2 s^{-1}$'
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-40000, vmax=40000)
+    else:
+        units = '$ms^{-1}$'
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1, vmax=1)
+    plt.xlabel('Longitude ($^\circ$)')
+    plt.ylabel('Lattitude ($^\circ$)')
+    plt.colorbar(label=f'{plot_of} ({units})')
+    plt.savefig(f'f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/{variable_name}_{exp}.png')
+    plt.show()
+
+def plot_gyre_inverse_tests(exp):
+    """
+    Plot the output of the gyre inverse tests.
+    Input:
+    exp, which experiment number.
+    Ouput:
+    plots of the velocities and errors.
+    """
+    # netcdf file locations
+    exp_input_file = f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp{exp}.nc"
+
+    # lon and lat for each grid
+    lon, lat, time = read_file_info(exp_input_file)
+
+    # gyre12 outputs
+    gyre12_u = read_file(exp_input_file, "u")[0]
+    gyre12_v = read_file(exp_input_file, "v")[0]
+    gyre12_psi = read_file(exp_input_file, "psi")[0]
+    gyre12_chi = read_file(exp_input_file, "chi")[0]
+    gyre12_u_err = read_file(exp_input_file, "u_rel_err")[0]
+    gyre12_v_err = read_file(exp_input_file, "v_rel_err")[0]
+
+
+    # plot gyre12
+    contour_gyre_inv(lon, lat, gyre12_u, 'Zonal Velocity', 'u', f'{exp}')
+    contour_gyre_inv(lon, lat, gyre12_v, 'Meridional Velocity', 'v', f'{exp}')
+    contour_gyre_inv(lon, lat, gyre12_psi, 'Streamfunction', 'SF', f'{exp}')
+    contour_gyre_inv(lon, lat, gyre12_chi, 'Velocity Potential', 'VP', f'{exp}')
+    contour_gyre_inv(lon, lat, gyre12_u_err, 'Zonal Velocity Relative Error', 'u_err', f'{exp}')
+    contour_gyre_inv(lon, lat, gyre12_v_err, 'Meridional Velocity Relative Error', 'v_err', f'{exp}')
+
 if __name__ == '__main__':
-    plot_gyre12(30100101)
+    #plot_gyre12(30100101)
     #plot_gyre12_diff(30100101, 30020101)
+    #plot_gyre36()
+    plot_gyre_inverse_tests('1')

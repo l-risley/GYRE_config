@@ -8,13 +8,13 @@ from scipy.interpolate import griddata
 from read_nemo_fields import *
 from general_functions import *
 
-def contour_gyre(x, y, z, plot_of: str, variable_name: str):
+def contour_gyre(x, y, z, variable_name: str):
     # 2D contour_gyre plot of one variable
     # switch coords from m to km
-    plt.title(f'{variable_name} - {plot_of}')
+    plt.title(f'{variable_name}')# - {plot_of}')
     if variable_name == 'Elevation':
         units = '$m$'
-        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')#, vmin=-1, vmax=1.5)
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-0.5, vmax=1)
     elif variable_name == 'SF' or variable_name == 'VP':
         units = '$m^2 s^{-1}$'
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')
@@ -23,11 +23,11 @@ def contour_gyre(x, y, z, plot_of: str, variable_name: str):
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')
     else:
         units = '$ms^{-1}$'
-        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')#, vmin=-2, vmax=2)
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1, vmax=1)
     plt.xlabel('Longitude ($^\circ$)')
     plt.ylabel('Lattitude ($^\circ$)')
     plt.colorbar(label=f'{variable_name} ({units})')
-    plt.savefig(f'plots/{plot_of}{variable_name}.png')
+    #plt.savefig(f'plots/{plot_of}{variable_name}.png')
     plt.show()
 
 def plot_gyre12(date):
@@ -134,7 +134,10 @@ def contour_gyre_inv(x, y, z, plot_of: str, variable_name: str, exp:str):
     plt.title(f'{plot_of} - Experiment {exp}')
     if variable_name == 'SF' or variable_name == 'VP':
         units = '$m^2 s^{-1}$'
-        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-40000, vmax=40000)
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-10000, vmax=10000)
+    elif variable_name == 'u_err' or variable_name == 'v_err':
+        units = None
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-0.25, vmax=0.25)
     else:
         units = '$ms^{-1}$'
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1, vmax=1)
@@ -168,15 +171,50 @@ def plot_gyre_inverse_tests(exp):
 
 
     # plot gyre12
-    contour_gyre_inv(lon, lat, gyre12_u, 'Zonal Velocity', 'u', f'{exp}')
-    contour_gyre_inv(lon, lat, gyre12_v, 'Meridional Velocity', 'v', f'{exp}')
+    #contour_gyre_inv(lon, lat, gyre12_u, 'Zonal Velocity', 'u', f'{exp}')
+    #contour_gyre_inv(lon, lat, gyre12_v, 'Meridional Velocity', 'v', f'{exp}')
     contour_gyre_inv(lon, lat, gyre12_psi, 'Streamfunction', 'SF', f'{exp}')
-    contour_gyre_inv(lon, lat, gyre12_chi, 'Velocity Potential', 'VP', f'{exp}')
+    #contour_gyre_inv(lon, lat, gyre12_chi, 'Velocity Potential', 'VP', f'{exp}')
     contour_gyre_inv(lon, lat, gyre12_u_err, 'Zonal Velocity Relative Error', 'u_err', f'{exp}')
     contour_gyre_inv(lon, lat, gyre12_v_err, 'Meridional Velocity Relative Error', 'v_err', f'{exp}')
+
+def plot_nature_run_gyre12():
+    """
+    Plot a gyre12 output for a particular date.
+    """
+
+    # netcdf file locations
+    gyre12_input_file_T = f"/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/lunchtime_seminar_24/20090801T0000Z_mersea.grid_T_gyre12.nc"
+    gyre12_input_file_U = f"/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/lunchtime_seminar_24/20090801T0000Z_mersea.grid_U_gyre12.nc"
+    gyre12_input_file_V = f"/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/lunchtime_seminar_24/20090801T0000Z_mersea.grid_V_gyre12.nc"
+
+    # lon and lat for each grid
+    gyre12_lon, gyre12_lat, time = read_file_info(gyre12_input_file_T)
+
+    # gyre12 outputs
+    gyre12_eta = read_file(gyre12_input_file_T, "sossheig")
+    gyre12_u = read_file(gyre12_input_file_U, "vozocrtx")[0]
+    gyre12_v = read_file(gyre12_input_file_V, "vomecrty")[0]
+    gyre12_t = read_file(gyre12_input_file_T, "votemper")[0]
+    gyre12_s = read_file(gyre12_input_file_T, "vosaline")[0]
+
+    print(gyre12_t[1, :100])
+    plt.plot(np.arange(0,100),gyre12_t[1, :100])
+    plt.show()
+    # extract the year only
+    year = int(str(20090801)[:4])
+    actual_date = int(year) - 2000
+
+    # plot gyre12
+    contour_gyre(gyre12_lon, gyre12_lat, gyre12_eta, 'Elevation') #f'Gyre12 {actual_date} yrs', 'Elevation')
+    contour_gyre(gyre12_lon, gyre12_lat, gyre12_u, 'Zonal Velocity') #f'Gyre12 {actual_date} yrs', 'Zonal Velocity')
+    contour_gyre(gyre12_lon, gyre12_lat, gyre12_v, 'Meridional Velocity') #f'Gyre12 {actual_date} yrs', 'Meridional Velocity')
+    contour_gyre(gyre12_lon, gyre12_lat, gyre12_t, 'Temperature') # f'Gyre12 {actual_date} yrs', 'Temperature')
+    contour_gyre(gyre12_lon, gyre12_lat, gyre12_s, 'Salinity')  # f'Gyre12 {actual_date} yrs', 'Salinity')
 
 if __name__ == '__main__':
     #plot_gyre12(30100101)
     #plot_gyre12_diff(30100101, 30020101)
     #plot_gyre36()
-    plot_gyre_inverse_tests('1')
+    #plot_gyre_inverse_tests('2')
+    plot_nature_run_gyre12()

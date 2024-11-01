@@ -54,12 +54,39 @@ def plot_field(da, da2=None, output_dir=".", variable=None):
     out_fname = f"{output_dir}/{var_name}_{datetime}.png"
     plt.savefig(out_fname)
 
-if __name__ == "__main__":
+def plot_from_nc(input_file, variable, input_file1 = None):
+    config = "gyre12"
+    output_dir = f"/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/"
 
+    if variable in ["sozocrtx", "sozotaux"]:
+        ds = xarray.open_mfdataset(input_file)
+        das = ds[variable].isel(depthu=0)
+    elif variable in ["somecrty", "sometauy"]:
+        ds = xarray.open_mfdataset(input_file)
+        das = ds[variable].isel(depthv=0)
+    elif variable in ["velocity"]:
+        ds1 = xarray.open_mfdataset(input_file)
+        ds2 = xarray.open_mfdataset(input_file1)
+        das1 = ds1["vozocrtx"].isel(depthu=0)
+        das2 = ds2["vomecrty"].isel(depthv=0)
+    else:
+        ds = xarray.open_mfdataset(input_file)
+        das = ds[variable].isel(deptht=0)
+
+    if variable == "velocity":
+        for da1, da2 in zip(das1, das2):
+            plot_field(da1, da2=da2, output_dir=output_dir, variable=variable)
+    else:
+        ds = xarray.open_mfdataset(input_file)
+        for da in das:
+            plot_field(da, output_dir=output_dir)
+
+if __name__ == "__main__":
+    """
     #variable = "velocity"
-    #variable = "sossheig"
+    variable = "sossheig"
     #variable = "votemper"
-    variable = "vosaline"
+    #variable = "vosaline"
 
     config = "gyre12"
 
@@ -93,4 +120,41 @@ if __name__ == "__main__":
         ds = xarray.open_mfdataset(input_file)
         for da in das:
             plot_field(da, output_dir=output_dir)
+        """
 
+    #variable = "velocity"
+    variable = "sossheig"
+    #variable = "votemper"
+    #variable = "vosaline"
+
+    input_dir = f"/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/"
+    output_dir = f"/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/"
+
+    if variable in ["sozocrtx", "sozotaux"]:
+        input_file = f"{input_dir}/instant_surface.grid_U.nc"
+        ds = xarray.open_mfdataset(input_file)
+        das = ds[variable].isel(depthu=0)
+    elif variable in ["somecrty", "sometauy"]:
+        input_file = f"{input_dir}/instant_surface.grid_V.nc"
+        ds = xarray.open_mfdataset(input_file)
+        das = ds[variable].isel(depthv=0)
+    elif variable in ["velocity"]:
+        input_file1 = f"{input_dir}/instant_surface.grid_U.nc"
+        input_file2 = f"{input_dir}/instant_surface.grid_V.nc"
+        ds1 = xarray.open_mfdataset(input_file1)
+        ds2 = xarray.open_mfdataset(input_file2)
+        das1 = ds1["vozocrtx"].isel(depthu=0)
+        das2 = ds2["vomecrty"].isel(depthv=0)
+    else:
+        input_file = [f"{input_dir}/instant.grid_T.nc"]
+        print(input_file)
+        ds = xarray.open_mfdataset(input_file)
+        das = ds[variable].isel(deptht=0)
+
+    if variable == "velocity":
+        for da1, da2 in zip(das1, das2):
+            plot_field(da1, da2=da2, output_dir=output_dir, variable=variable)
+    else:
+        ds = xarray.open_mfdataset(input_file)
+        for da in das:
+            plot_field(da, output_dir=output_dir)

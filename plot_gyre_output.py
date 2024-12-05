@@ -23,7 +23,7 @@ def contour_gyre(x, y, z, variable_name: str):
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')
     else:
         units = '$ms^{-1}$'
-        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1, vmax=1)
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-0.6, vmax=0.6)
     plt.xlabel('Longitude ($^\circ$)')
     plt.ylabel('Lattitude ($^\circ$)')
     plt.colorbar(label=f'{variable_name} ({units})')
@@ -134,17 +134,17 @@ def contour_gyre_inv(x, y, z, plot_of: str, variable_name: str, exp:str):
     plt.title(f'{plot_of} - Experiment {exp}')
     if variable_name == 'SF' or variable_name == 'VP':
         units = '$m^2 s^{-1}$'
-        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-10000, vmax=10000)
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-15000, vmax=15000)
     elif variable_name == 'u_err' or variable_name == 'v_err':
         units = None
-        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-0.25, vmax=0.25)
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1, vmax=1)
     else:
         units = '$ms^{-1}$'
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1, vmax=1)
     plt.xlabel('Longitude ($^\circ$)')
     plt.ylabel('Lattitude ($^\circ$)')
     plt.colorbar(label=f'{plot_of} ({units})')
-    plt.savefig(f'f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/{variable_name}_{exp}.png')
+    #plt.savefig(f'f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/{variable_name}_{exp}.png')
     plt.show()
 
 def plot_gyre_inverse_tests(exp):
@@ -212,9 +212,30 @@ def plot_nature_run_gyre12():
     contour_gyre(gyre12_lon, gyre12_lat, gyre12_t, 'Temperature') # f'Gyre12 {actual_date} yrs', 'Temperature')
     contour_gyre(gyre12_lon, gyre12_lat, gyre12_s, 'Salinity')  # f'Gyre12 {actual_date} yrs', 'Salinity')
 
+def plot_vel_errors():
+    """
+    Plot velocity error files for inverse transformation.
+    """
+    # netcdf file locations
+    u_input_file = f"/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/vel_errors/vel_error_20090201T0000Z.grid_U.nc"
+    v_input_file = f"/c/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/vel_errors/vel_error_20090201T0000Z.grid_V.nc"
+
+    # lon and lat for each grid
+    gyre12_lon, gyre12_lat, time = read_file_info(u_input_file)
+
+    # gyre12 outputs
+    gyre12_u = read_file(u_input_file, "vozocrtx")[0]
+    gyre12_v = read_file(v_input_file, "vomecrty")[0]
+
+    # plot gyre12
+    contour_gyre(gyre12_lon, gyre12_lat, gyre12_u, 'Zonal velocity increment')  # f'Gyre12 {actual_date} yrs', 'Zonal Velocity')
+    contour_gyre(gyre12_lon, gyre12_lat, gyre12_v, 'Meridional velocity increment')  # f'Gyre12 {actual_date} yrs', 'Meridional Velocity')
+
+
 if __name__ == '__main__':
     #plot_gyre12(30100101)
     #plot_gyre12_diff(30100101, 30020101)
     #plot_gyre36()
-    #plot_gyre_inverse_tests('2')
-    plot_nature_run_gyre12()
+    #plot_gyre_inverse_tests('9')
+    #plot_nature_run_gyre12()
+    plot_vel_errors()

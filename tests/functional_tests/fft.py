@@ -39,24 +39,11 @@ def normalised_fft_freq(signal, signal_name):
         "font.family": "monospace",
         "font.monospace": 'Computer Modern Typewriter',
     })
-    fourier = fft(signal)
     # Calculate N/2 to normalize the FFT output
     N = len(signal)
-    normalize = N / 2
     # Get the frequency components of the spectrum
     sampling_rate = 100.0  # It's used as a sample spacing
-    frequency_axis = fftfreq(N, d=1.0 / sampling_rate)
-    norm_amplitude = np.abs(fourier) / normalize
-    # Plot the results
-    #plt.plot(frequency_axis, norm_amplitude)
-    #plt.xlabel('Frequency[Hz]')
-    #plt.ylabel('Amplitude')
-    #plt.title(f'Spectrum for {signal_name}')
-    #plt.show()
-    #plt.plot(frequency_axis)
-    #plt.ylabel('Frequency[Hz]')
-    #plt.title(f'Frequency Axis for {signal_name}')
-    #plt.show()
+
     # Plot the actual spectrum of the signal
     plt.plot(rfftfreq(N, d=1 / sampling_rate), 2 * np.abs(rfft(signal)) / N)
     plt.title(f'Spectrum for {signal_name}')
@@ -64,7 +51,7 @@ def normalised_fft_freq(signal, signal_name):
     plt.ylabel('Amplitude')
     plt.show()
 
-def contour_fft_lines(x, y, z, fft, plot_of: str, variable_name: str):
+def contour_fft_lines(x, y, z, fft, plot_of: str, variable_name: str, line : str):
     # 2D contour plot of one variable
     # switch coords from m to km
     plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-15000, vmax=15000)
@@ -79,18 +66,23 @@ def contour_fft_lines(x, y, z, fft, plot_of: str, variable_name: str):
     else:
         units = '$ms^{-1}$'
     plt.colorbar(label=f'{variable_name} ({units})')
-    # line plot of where the fft is applied
-    #y_1, y_2, y_3 = [y[fft[0]]]*len(x), [y[fft[1]]]*len(x), [y[fft[2]]]*len(x)
-    x_1, x_2, x_3 = x[fft[0], :], x[fft[1], :], x[fft[2], :]
-    y_1, y_2, y_3 = y[fft[0], :], y[fft[1], :], y[fft[2], :]
-    plt.plot(x_1, y_1, c='k', label='Line 1')
-    plt.plot(x_2, y_2, c='y', label='Line 2')
-    plt.plot(x_3, y_3, c='w', label='Line 3')
+    if line == 'horizontal':
+        x_1, x_2, x_3 = x[fft[0], :], x[fft[1], :], x[fft[2], :]
+        y_1, y_2, y_3 = y[fft[0], :], y[fft[1], :], y[fft[2], :]
+        plt.plot(x_1, y_1, c='k', label='Line 1')
+        plt.plot(x_2, y_2, c='y', label='Line 2')
+        plt.plot(x_3, y_3, c='w', label='Line 3')
+    elif line == 'vertical':
+        x_1, x_2, x_3 = x[:, fft[0]], x[:, fft[1]], x[:, fft[2]]
+        y_1, y_2, y_3 = y[:, fft[0]], y[:, fft[1]], y[:, fft[2]]
+        plt.plot(x_1, y_1, c='k', label='Line 1')
+        plt.plot(x_2, y_2, c='y', label='Line 2')
+        plt.plot(x_3, y_3, c='w', label='Line 3')
     #plt.savefig(f'plots/{plot_of}{variable_name}.png')
     plt.legend()
     plt.show()
 
-def fft_checkerboard(exp_no):
+def fft_checkerboard_horizontal(exp_no, sf_filter: str):
     # input psi field
     # netcdf file locations
     exp_input_file = f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp{exp_no}.nc"
@@ -100,6 +92,14 @@ def fft_checkerboard(exp_no):
 
     # gyre12 outputs
     psi = read_file(exp_input_file, "psi")[0]
+    u = read_file(exp_input_file, "u")[0]
+    u_recon = read_file(exp_input_file, "u_inv")[0]
+    v = read_file(exp_input_file, "v")[0]
+    v_recon = read_file(exp_input_file, "v_inv")[0]
+
+    # calculate the raw error
+    u_err = u - u_recon
+    v_err = v - v_recon
 
     # run ffft to identify the strength of the checkerboard effect
     ny, nx = np.shape(psi)
@@ -110,21 +110,190 @@ def fft_checkerboard(exp_no):
     x_3_lat = np.int(np.floor(2 * ny / 3))
     x_lat = [x_1_lat, x_2_lat, x_3_lat]
 
+    ### FFT FOR STREAMFUNCTION ###
     # take strips of x
     x_1 = psi[x_1_lat, :]
     x_2 = psi[x_2_lat, :]
     x_3 = psi[x_3_lat, :]
 
     # plot the field with the lines on top
-    contour_fft_lines(lon, lat, psi, x_lat,'Streamfunction - no filter', 'SF')
+    contour_fft_lines(lon, lat, psi, x_lat,f'Streamfunction - {sf_filter}', 'SF', 'horizontal')
 
     # plot the FFT
-    # normalised_fft(x_1, f'{input} at {x_1_lat * 10} km lattitude.')
     normalised_fft_freq(x_1, f'$\psi$ for line 1.')
-    # normalised_fft(x_2, f'{input} at {x_2_lat * 10} km lattitude.')
     normalised_fft_freq(x_2, f'$\psi$ for line 2.')
-    # normalised_fft(x_3, f'{input} at {x_3_lat * 10} km lattitude.')
     normalised_fft_freq(x_3, f'$\psi$ at for line 3.')
 
+    """
+    ### FFT FOR THE VELOCITIES ###
+    u_1 = u[x_1_lat, :]
+    u_2 = u[x_2_lat, :]
+    u_3 = u[x_3_lat, :]
+
+    v_1 = v[x_1_lat, :]
+    v_2 = v[x_2_lat, :]
+    v_3 = v[x_3_lat, :]
+
+    # plot the field with the lines on top
+    contour_fft_lines(lon, lat, u, x_lat, 'Zonal velocity increment', 'u')
+    contour_fft_lines(lon, lat, v, x_lat, 'Meridional velocity increment', 'v')
+
+    # plot the FFT
+    normalised_fft_freq(u_1, f'$u$ for line 1.')
+    normalised_fft_freq(u_2, f'$u$ for line 2.')
+    normalised_fft_freq(u_3, f'$u$ at for line 3.')
+
+    # plot the FFT
+    normalised_fft_freq(v_1, f'$v$ for line 1.')
+    normalised_fft_freq(v_2, f'$v$ for line 2.')
+    normalised_fft_freq(v_3, f'$v$ at for line 3.')
+    """
+    ### FFT FOR THE RECONSTRUCTED VELOCITIES ###
+    u_r_1 = u_recon[x_1_lat, :]
+    u_r_2 = u_recon[x_2_lat, :]
+    u_r_3 = u_recon[x_3_lat, :]
+
+    v_r_1 = v_recon[x_1_lat, :]
+    v_r_2 = v_recon[x_2_lat, :]
+    v_r_3 = v_recon[x_3_lat, :]
+
+    # plot the field with the lines on top
+    contour_fft_lines(lon, lat, u_recon, x_lat, 'Reconstructed zonal velocity increment', 'u' 'horizontal')
+    contour_fft_lines(lon, lat, v_recon, x_lat, 'Reconstructed meridional velocity increment', 'v' 'horizontal')
+
+    # plot the FFT
+    normalised_fft_freq(u_r_1, '$u_{re}$ for line 1.')
+    normalised_fft_freq(u_r_2, '$u_{re}$ for line 2.')
+    normalised_fft_freq(u_r_3, '$u_{re}$ at for line 3.')
+
+    # plot the FFT
+    normalised_fft_freq(v_r_1, '$v_{re}$ for line 1.')
+    normalised_fft_freq(v_r_2, '$v_{re}$ for line 2.')
+    normalised_fft_freq(v_r_3, '$v_{re}$ at for line 3.')
+
+    ### FFT FOR THE RECONSTRUCTED VELOCITIES ERROR###
+    u_err_1 = u_err[x_1_lat, :]
+    u_err_2 = u_err[x_2_lat, :]
+    u_err_3 = u_err[x_3_lat, :]
+
+    v_err_1 = v_err[x_1_lat, :]
+    v_err_2 = v_err[x_2_lat, :]
+    v_err_3 = v_err[x_3_lat, :]
+
+    # plot the field with the lines on top
+    contour_fft_lines(lon, lat, u_err, x_lat, 'Zonal velocity increment error', 'u' 'horizontal')
+    contour_fft_lines(lon, lat, v_err, x_lat, 'Meridional velocity increment error', 'v' 'horizontal')
+
+    # plot the FFT
+    normalised_fft_freq(u_err_1, '$u_{err}$ for line 1.')
+    normalised_fft_freq(u_err_2, '$u_{err}$ for line 2.')
+    normalised_fft_freq(u_err_3, '$u_{err}$ at for line 3.')
+
+    # plot the FFT
+    normalised_fft_freq(v_err_1, '$v_{err}$ for line 1.')
+    normalised_fft_freq(v_err_2, '$v_{err}$ for line 2.')
+    normalised_fft_freq(v_err_3, '$v_{err}$ at for line 3.')
+
+def fft_checkerboard_vertical(exp_no, sf_filter: str):
+    # input psi field
+    # netcdf file locations
+    exp_input_file = f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp{exp_no}.nc"
+
+    # lon and lat for each grid
+    lon, lat, time = read_file_info(exp_input_file)
+
+    # gyre12 outputs
+    psi = read_file(exp_input_file, "psi")[0]
+    u = read_file(exp_input_file, "u")[0]
+    u_recon = read_file(exp_input_file, "u_inv")[0]
+    v = read_file(exp_input_file, "v")[0]
+    v_recon = read_file(exp_input_file, "v_inv")[0]
+
+    # calculate the raw error
+    u_err = u - u_recon
+    v_err = v - v_recon
+
+    # run ffft to identify the strength of the checkerboard effect
+    ny, nx = np.shape(psi)
+
+    # the longitudes
+    x_1_lon = np.int(np.floor(nx / 7))
+    x_2_lon = np.int(np.floor(nx / 2))
+    x_3_lon = np.int(np.floor(3 * nx / 4))
+    x_lon = [x_1_lon, x_2_lon, x_3_lon]
+
+    ### FFT FOR STREAMFUNCTION ###
+    # take strips of x
+    x_1 = psi[:, x_1_lon]
+    x_2 = psi[:, x_2_lon]
+    x_3 = psi[:, x_3_lon]
+
+    # plot the field with the lines on top
+    contour_fft_lines(lon, lat, psi, x_lon, f'Streamfunction - {sf_filter}', 'SF', 'vertical')
+
+    # plot the FFT
+    normalised_fft_freq(x_1, f'$\psi$ for line 1.')
+    normalised_fft_freq(x_2, f'$\psi$ for line 2.')
+    normalised_fft_freq(x_3, f'$\psi$ for line 3.')
+
+    """
+    ### FFT FOR THE VELOCITIES ###
+    u_1 = u[:, x_1_lon]
+    u_2 = u[:, x_2_lon]
+    u_3 = u[:, x_3_lon]
+
+    v_1 = v[:, x_1_lon]
+    v_2 = v[:, x_2_lon]
+    v_3 = v[:, x_3_lon]
+
+    # plot the FFT
+    normalised_fft_freq(u_1, f'$u$ for line 1.')
+    normalised_fft_freq(u_2, f'$u$ for line 2.')
+    normalised_fft_freq(u_3, f'$u$ at for line 3.')
+
+    # plot the FFT
+    normalised_fft_freq(v_1, f'$v$ for line 1.')
+    normalised_fft_freq(v_2, f'$v$ for line 2.')
+    normalised_fft_freq(v_3, f'$v$ at for line 3.')
+    """
+    ### FFT FOR THE RECONSTRUCTED VELOCITIES ###
+    u_r_1 = u_recon[:, x_1_lon]
+    u_r_2 = u_recon[:, x_2_lon]
+    u_r_3 = u_recon[:, x_3_lon]
+
+    v_r_1 = v_recon[:, x_1_lon]
+    v_r_2 = v_recon[:, x_2_lon]
+    v_r_3 = v_recon[:, x_3_lon]
+
+    # plot the FFT
+    normalised_fft_freq(u_r_1, '$u_{re}$ for line 1.')
+    normalised_fft_freq(u_r_2, '$u_{re}$ for line 2.')
+    normalised_fft_freq(u_r_3, '$u_{re}$ at for line 3.')
+
+    # plot the FFT
+    normalised_fft_freq(v_r_1, '$v_{re}$ for line 1.')
+    normalised_fft_freq(v_r_2, '$v_{re}$ for line 2.')
+    normalised_fft_freq(v_r_3, '$v_{re}$ at for line 3.')
+
+    ### FFT FOR THE RECONSTRUCTED VELOCITIES ERROR###
+    u_err_1 = u_err[:, x_1_lon]
+    u_err_2 = u_err[:, x_2_lon]
+    u_err_3 = u_err[:, x_3_lon]
+
+    v_err_1 = v_err[:, x_1_lon]
+    v_err_2 = v_err[:, x_2_lon]
+    v_err_3 = v_err[:, x_3_lon]
+
+    # plot the FFT
+    normalised_fft_freq(u_err_1, '$u_{err}$ for line 1.')
+    normalised_fft_freq(u_err_2, '$u_{err}$ for line 2.')
+    normalised_fft_freq(u_err_3, '$u_{err}$ at for line 3.')
+
+    # plot the FFT
+    normalised_fft_freq(v_err_1, '$v_{err}$ for line 1.')
+    normalised_fft_freq(v_err_2, '$v_{err}$ for line 2.')
+    normalised_fft_freq(v_err_3, '$v_{err}$ at for line 3.')
+
 if __name__ == '__main__':
-    fft_checkerboard(7)
+    #fft_checkerboard_horizontal(8, '5 iterations of filter')
+    fft_checkerboard_vertical(7, 'No filter')

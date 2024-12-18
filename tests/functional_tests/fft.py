@@ -45,7 +45,7 @@ def normalised_fft_freq(signal, signal_name):
     sampling_rate = 100.0  # It's used as a sample spacing
 
     # Plot the actual spectrum of the signal
-    plt.plot(rfftfreq(N, d=1 / sampling_rate), 2 * np.abs(rfft(signal)) / N)
+    plt.plot(2 * np.abs(rfft(signal)) / N) #rfftfreq(N, d=1 / sampling_rate)
     plt.title(f'Spectrum for {signal_name}')
     plt.xlabel('Frequency[Hz]')
     plt.ylabel('Amplitude')

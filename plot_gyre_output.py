@@ -166,9 +166,14 @@ def plot_gyre_inverse_tests(exp):
     gyre12_v = read_file(exp_input_file, "v")[0]
     gyre12_psi = read_file(exp_input_file, "psi")[0]
     gyre12_chi = read_file(exp_input_file, "chi")[0]
+    gyre12_u_inv = read_file(exp_input_file, "u_inv")[0]
+    gyre12_v_inv = read_file(exp_input_file, "v_inv")[0]
     gyre12_u_err = read_file(exp_input_file, "u_rel_err")[0]
     gyre12_v_err = read_file(exp_input_file, "v_rel_err")[0]
 
+    # calculate the raw error
+    u_err = gyre12_u - gyre12_u_inv
+    v_err = gyre12_v - gyre12_v_inv
 
     # plot gyre12
     #contour_gyre_inv(lon, lat, gyre12_u, 'Zonal Velocity', 'u', f'{exp}')
@@ -177,6 +182,18 @@ def plot_gyre_inverse_tests(exp):
     #contour_gyre_inv(lon, lat, gyre12_chi, 'Velocity Potential', 'VP', f'{exp}')
     contour_gyre_inv(lon, lat, gyre12_u_err, 'Zonal Velocity Relative Error', 'u_err', f'{exp}')
     contour_gyre_inv(lon, lat, gyre12_v_err, 'Meridional Velocity Relative Error', 'v_err', f'{exp}')
+
+    contour_gyre_inv(lon, lat, u_err, 'Zonal Velocity Error', 'u', f'{exp}')
+    contour_gyre_inv(lon, lat, v_err, 'Meridional Velocity Error', 'v', f'{exp}')
+
+    print(f'Min velocity increment, u = {np.min(gyre12_u)}, v = {np.min(gyre12_v)}')
+    print(f'Min abs velocity increment, u = {np.min(abs(gyre12_u))}, v = {np.min(abs(gyre12_v))}')
+    print(f'Max velocity increment, u = {np.max(gyre12_u)}, v = {np.max(gyre12_v)}')
+    print(f'Max abs velocity increment, u = {np.max(abs(gyre12_u))}, v = {np.max(abs(gyre12_v))}')
+    print(f'Min velocity reconstructed increment, u = {np.min(gyre12_u_inv)}, v = {np.min(gyre12_v_inv)}')
+    print(f'Min abs velocity reconstructed increment, u = {np.min(abs(gyre12_u_inv))}, v = {np.min(abs(gyre12_v_inv))}')
+    print(f'Max velocity reconstructed increment, u = {np.max(gyre12_u_inv)}, v = {np.max(gyre12_v_inv)}')
+    print(f'Max abs velocity reconstructed increment, u = {np.max(abs(gyre12_u_inv))}, v = {np.max(abs(gyre12_v_inv))}')
 
 def plot_nature_run_gyre12():
     """
@@ -236,6 +253,6 @@ if __name__ == '__main__':
     #plot_gyre12(30100101)
     #plot_gyre12_diff(30100101, 30020101)
     #plot_gyre36()
-    #plot_gyre_inverse_tests('9')
+    plot_gyre_inverse_tests('7')
     #plot_nature_run_gyre12()
-    plot_vel_errors()
+    #plot_vel_errors()

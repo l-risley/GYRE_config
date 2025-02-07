@@ -168,14 +168,20 @@ def comp_gyre_inverse_rms():
     """
 
     """
-    info = np.loadtxt(f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/exp_mu_cc.txt',delimiter=",")
+    info = np.loadtxt(f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/exps_mu_cc.txt',delimiter=",")
     exps = info[:, 0]
     mu_arr = info[:, 1]
     cc_arr = info[:, 2]
-    u_rms_arr = []
-    v_rms_arr = []
+    u_rms_arr = np.empty_like(exps)
+    v_rms_arr = np.empty_like(exps)
+    # Ensure all arrays are of the same length
+    assert len(mu_arr) == len(cc_arr) == len(u_rms_arr) == len(v_rms_arr), "Arrays must be the same length"
+
+    idx = 0
+
     for i in exps:
-        exp_nc = np.loadtxt(f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp{i}.nc', delimiter=",")
+        i = int(i)
+        exp_nc = f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp{i}.nc'
         lon, lat, time = read_file_info(exp_nc)
 
         u = read_file(exp_nc, "u")[0]
@@ -195,27 +201,38 @@ def comp_gyre_inverse_rms():
         u_rms = calculate_rms_2d(u_err)
         v_rms = calculate_rms_2d(v_err)
 
-        u_rms_arr[i] = u_rms
-        v_rms_arr[i] - v_rms
+        u_rms_arr[idx] = u_rms
+        v_rms_arr[idx] = v_rms
 
-    for j in cc_arr:
-        plt.plot(mu_arr, u_rms_arr, label=f'{cc_arr[j]}')
+        idx+=1
+
+    ##### PLOT RMS #####
+    # Separate data by cc values
+    unique_cc = np.unique(cc_arr)  # Find unique values of cc
+    for value in unique_cc:
+        indices = np.where(cc_arr == value)[0]  # Get indices where cc equals the current value
+        plt.plot(mu_arr[indices], u_rms_arr[indices], marker='o', linestyle='-', label=f'cc={value}')
     plt.xlabel('Regularisation parameter')
     plt.ylabel(f'RMS')
-    #plt.yscale('log')
-    plt.legend()
+    plt.xscale('log')
+    plt.legend(title = "Convergence criteria")
     plt.title(f'RMS of the zonal velocity reconstruction error')
     plt.show()
 
-    for k in cc_arr:
-        plt.plot(mu_arr, v_rms_arr, label=f'{cc_arr[k]}')
+    for value in unique_cc:
+        indices = np.where(cc_arr == value)[0]  # Get indices where cc equals the current value
+        plt.plot(mu_arr[indices], v_rms_arr[indices], marker='o', linestyle='-', label=f'{value}')
     plt.xlabel('Regularisation parameter')
     plt.ylabel(f'RMS')
-    #plt.yscale('log')
-    plt.legend()
+    plt.xscale('log')
+    plt.legend(title = "Convergence criteria")
     plt.title(f'RMS of the meridional velocity reconstruction error')
+    plt.show()
+
+    plt.pcolormesh(mu_arr, cc_arr, u_rms_arr, cmap='viridis', shading='auto')
     plt.show()
 
 
 if __name__ == '__main__':
-    comp_gyre_inverse_tests('16', '20')
+    #comp_gyre_inverse_tests('16', '20')
+    comp_gyre_inverse_rms()

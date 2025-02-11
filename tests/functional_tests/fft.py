@@ -106,8 +106,8 @@ def fft_checkerboard_horizontal(exp_no, sf_filter: str):
 
     # the lattitudes
     x_1_lat = np.int(np.floor(ny / 3))
-    x_2_lat = np.int(np.floor(ny / 2))
-    x_3_lat = np.int(np.floor(2 * ny / 3))
+    x_2_lat = np.int(np.floor(5 * ny / 9))
+    x_3_lat = np.int(np.floor(8 * ny / 9))
     x_lat = [x_1_lat, x_2_lat, x_3_lat]
 
     ### FFT FOR STREAMFUNCTION ###
@@ -117,7 +117,7 @@ def fft_checkerboard_horizontal(exp_no, sf_filter: str):
     x_3 = psi[x_3_lat, :]
 
     # plot the field with the lines on top
-    contour_fft_lines(lon, lat, psi, x_lat,f'Streamfunction - {sf_filter}', 'SF', 'horizontal')
+    contour_fft_lines(lon, lat, psi, x_lat, f'Streamfunction - {sf_filter}', 'SF', 'horizontal')
 
     # plot the FFT
     normalised_fft_freq(x_1, f'$\psi$ for line 1.')
@@ -158,8 +158,8 @@ def fft_checkerboard_horizontal(exp_no, sf_filter: str):
     v_r_3 = v_recon[x_3_lat, :]
 
     # plot the field with the lines on top
-    contour_fft_lines(lon, lat, u_recon, x_lat, 'Reconstructed zonal velocity increment', 'u' 'horizontal')
-    contour_fft_lines(lon, lat, v_recon, x_lat, 'Reconstructed meridional velocity increment', 'v' 'horizontal')
+    contour_fft_lines(lon, lat, u_recon, x_lat, 'Reconstructed zonal velocity increment', 'u', 'horizontal')
+    contour_fft_lines(lon, lat, v_recon, x_lat, 'Reconstructed meridional velocity increment', 'v', 'horizontal')
 
     # plot the FFT
     normalised_fft_freq(u_r_1, '$u_{re}$ for line 1.')
@@ -181,8 +181,8 @@ def fft_checkerboard_horizontal(exp_no, sf_filter: str):
     v_err_3 = v_err[x_3_lat, :]
 
     # plot the field with the lines on top
-    contour_fft_lines(lon, lat, u_err, x_lat, 'Zonal velocity increment error', 'u' 'horizontal')
-    contour_fft_lines(lon, lat, v_err, x_lat, 'Meridional velocity increment error', 'v' 'horizontal')
+    contour_fft_lines(lon, lat, u_err, x_lat, 'Zonal velocity increment error', 'u', 'horizontal')
+    contour_fft_lines(lon, lat, v_err, x_lat, 'Meridional velocity increment error', 'v', 'horizontal')
 
     # plot the FFT
     normalised_fft_freq(u_err_1, '$u_{err}$ for line 1.')
@@ -295,5 +295,6 @@ def fft_checkerboard_vertical(exp_no, sf_filter: str):
     normalised_fft_freq(v_err_3, '$v_{err}$ at for line 3.')
 
 if __name__ == '__main__':
-    #fft_checkerboard_horizontal(8, '5 iterations of filter')
-    fft_checkerboard_vertical(7, 'No filter')
+    fft_checkerboard_horizontal(31
+                                , 'No filter')#'5 iterations of filter')
+    #fft_checkerboard_vertical(7, 'No filter')

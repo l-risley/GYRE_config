@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def conv_plot():
-    exps = [31, 35, 37]
-    label = [1e-5, 1e-6, 1e-7]
-    grays = np.linspace(0.3, 0.7, len(exps))  # Creates an array of grays from 0 (black) to 1 (white)
+    exps = [27, 21, 31, 35, 37]
+    label = [1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
+    grays = np.linspace(0.2, 0.8, len(exps))  # Creates an array of grays from 0 (black) to 1 (white)
     # Create a dictionary to hold the arrays
     arrays = {}
     j=0

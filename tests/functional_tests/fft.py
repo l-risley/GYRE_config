@@ -96,11 +96,11 @@ def fft_checkerboard_horizontal(exp_no, sf_filter: str):
     lon, lat, time = read_file_info(exp_input_file)
 
     # gyre12 outputs
-    psi = read_file(exp_input_file, "psi")[0]
-    u = read_file(exp_input_file, "u")[0]
-    u_recon = read_file(exp_input_file, "u_inv")[0]
-    v = read_file(exp_input_file, "v")[0]
-    v_recon = read_file(exp_input_file, "v_inv")[0]
+    psi = read_file(exp_input_file, "psi")[-3]
+    u = read_file(exp_input_file, "u")[-3]
+    u_recon = read_file(exp_input_file, "u_inv")[-3]
+    v = read_file(exp_input_file, "v")[-3]
+    v_recon = read_file(exp_input_file, "v_inv")[-3]
 
     # calculate the raw error
     u_err = u - u_recon
@@ -374,7 +374,91 @@ def rel_diff_fft(exp1, exp2):
         plt.ylabel('Amplitude')
         plt.show()
 
+def normalised_fft_freq_depths(signals, depths, signal_name):
+    """
+    Calculate the Fourier transform of 'signal' and plot the normalised FFT spectrum.
+    """
+    plt.rcParams.update({
+        "text.usetex": True,
+        "font.family": "monospace",
+        "font.monospace": 'Computer Modern Typewriter',
+    })
+    for i in range(len(signals)):
+        alpha_value = 1 - 0.1 * i  # Transparency for each line
+        line_styles = ['-', '--', '-.', ':', '-']
+        zorder_value = 1 - 0.1 * i  # Lines with larger zorder appear on top
+        # Calculate N/2 to normalize the FFT output
+        N = len(signals[f"depth_{i}"])
+        # Get the frequency components of the spectrum
+        sampling_rate = 100.0  # It's used as a sample spacing
+        # Plot the actual spectrum of the signal
+        plt.plot(2 * np.abs(rfft(signals[f"depth_{i}"])) / N, label = f'{depths[i]}', linestyle=line_styles[i])
+    #print(np.max(2 * np.abs(rfft(signal)) / N))
+    plt.title(f'Spectrum for {signal_name}')
+    #plt.ylim(0, 0.08)
+    # plt.ylim(0, 2500)
+    plt.xlabel('Frequency[Hz]')
+    plt.ylabel('Amplitude')
+    plt.legend(title='Depth ($m$)')
+    plt.show()
+
+def fft_checkerboard_multiple_depths(exp_no, sf_filter: str):
+    # input psi field
+    # netcdf file locations
+    exp_input_file = f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp{exp_no}.nc"
+    depths = np.loadtxt('/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/gyre_depths.txt', delimiter=',')
+    idx = np.round(np.linspace(0, len(depths) - 1, 4)).astype(int)
+    depths = depths[idx]
+    # lon and lat for each grid
+    lon, lat, time = read_file_info(exp_input_file)
+    ny, nx = np.shape(lon)
+
+    # the lattitudes
+    x_1_lat = np.int(np.floor(2 * ny / 9))
+    x_2_lat = np.int(np.floor(4 * ny / 9))
+    x_3_lat = np.int(np.floor(6 * ny / 9))
+    x_4_lat = np.int(np.floor(8 * ny / 9))
+    x_lat = [x_1_lat, x_2_lat, x_3_lat, x_4_lat]
+
+    psi_1, psi_2, psi_3, psi_4 = {}, {}, {}, {}
+    v_err_1, v_err_2, v_err_3, v_err_4 = {}, {}, {}, {}
+
+    for d in range(len(depths)):
+        print
+        # gyre12 outputs
+        psi = read_file(exp_input_file, "psi")[d]
+        v = read_file(exp_input_file, "v")[d]
+        v_recon = read_file(exp_input_file, "v_inv")[d]
+
+        # calculate the raw error
+        v_err = v - v_recon
+
+        # take strips of x
+        psi_1[f"depth_{d}"] = psi[x_1_lat, :]
+        psi_2[f"depth_{d}"] = psi[x_2_lat, :]
+        psi_3[f"depth_{d}"] = psi[x_3_lat, :]
+        psi_4[f"depth_{d}"] = psi[x_4_lat, :]
+
+        v_err_1[f"depth_{d}"] = v_err[x_1_lat, :]
+        v_err_2[f"depth_{d}"] = v_err[x_2_lat, :]
+        v_err_3[f"depth_{d}"] = v_err[x_3_lat, :]
+        v_err_4[f"depth_{d}"] = v_err[x_4_lat, :]
+
+    # plot the field with the lines on top
+    #contour_fft_lines(lon, lat, psi, x_lat, f'Streamfunction - {sf_filter}', 'SF', 'horizontal')
+
+    # plot the FFT
+    normalised_fft_freq_depths(psi_1, depths, f'$\psi$ for line 1.')
+    normalised_fft_freq_depths(psi_2, depths, f'$\psi$ for line 2.')
+    normalised_fft_freq_depths(psi_3, depths, f'$\psi$ at for line 3.')
+    normalised_fft_freq_depths(psi_4, depths, f'$\psi$ at for line 4.')
+
+    normalised_fft_freq_depths(v_err_1, depths, '$v_{err}$ for line 1.')
+    normalised_fft_freq_depths(v_err_2, depths, '$v_{err}$ for line 2.')
+    normalised_fft_freq_depths(v_err_3, depths, '$v_{err}$ at for line 3.')
+    normalised_fft_freq_depths(v_err_4, depths, '$v_{err}$ at for line 4.')
 if __name__ == '__main__':
-    fft_checkerboard_horizontal(40, '5 iterations of the Shapiro filter')#'5 iterations of filter')
+    #fft_checkerboard_horizontal(31, 'No filter')#'5 iterations of filter')
     #fft_checkerboard_vertical(7, 'No filter')
     #rel_diff_fft(39, 40)
+    fft_checkerboard_multiple_depths(31, 'No filter')  # '5 iterations of filter')

@@ -383,23 +383,41 @@ def normalised_fft_freq_depths(signals, depths, signal_name):
         "font.family": "monospace",
         "font.monospace": 'Computer Modern Typewriter',
     })
-    for i in range(len(signals)):
-        alpha_value = 1 - 0.1 * i  # Transparency for each line
-        line_styles = ['-', '--', '-.', ':', '-']
-        zorder_value = 1 - 0.1 * i  # Lines with larger zorder appear on top
-        # Calculate N/2 to normalize the FFT output
-        N = len(signals[f"depth_{i}"])
-        # Get the frequency components of the spectrum
-        sampling_rate = 100.0  # It's used as a sample spacing
-        # Plot the actual spectrum of the signal
-        plt.plot(2 * np.abs(rfft(signals[f"depth_{i}"])) / N, label = f'{depths[i]}', linestyle=line_styles[i])
-    #print(np.max(2 * np.abs(rfft(signal)) / N))
+    # Initialize an empty list to store the FFT magnitudes
+    fft_magnitudes = []
+
+    # Loop over all depths and calculate the FFT magnitude
+    for i in range(31):
+        # Get the signal for depth i
+        signal = signals[f'depth_{i}']
+        N = len(signal)  # Length of the signal
+        # Perform the rfft and compute the magnitude
+        fft = rfft(signal)
+        magnitude = 2 * np.abs(fft) / N  # Normalize the FFT magnitude
+        fft_magnitudes.append(magnitude)
+
+    # Convert the list of FFT magnitudes into a numpy array (31 x N)
+    fft_magnitudes = np.array(fft_magnitudes)
+
+    # Compute the average FFT magnitude across depths
+    average_fft = np.mean(fft_magnitudes, axis=0)
+
+    # Compute the min and max FFT magnitudes for the shaded region
+    min_fft = np.min(fft_magnitudes, axis=0)
+    max_fft = np.max(fft_magnitudes, axis=0)
+
+    # Plot the average FFT magnitude
+    plt.plot(np.arange(len(average_fft)), average_fft, label='Average FFT', color='b', linewidth=2)
+    plt.plot(np.arange(len(average_fft)), fft_magnitudes[0], label='Surface FFT', color='r', linewidth=1)
+
+    # Plot the shaded region representing the range of FFT magnitudes
+    plt.fill_between(np.arange(len(average_fft)), min_fft, max_fft, color='gray', alpha=0.3,  label='Range of FFT')
     plt.title(f'Spectrum for {signal_name}')
-    #plt.ylim(0, 0.08)
-    # plt.ylim(0, 2500)
+    #plt.ylim(0, 2500)
+    plt.ylim(0, 0.03)
     plt.xlabel('Frequency[Hz]')
     plt.ylabel('Amplitude')
-    plt.legend(title='Depth ($m$)')
+    plt.legend()
     plt.show()
 
 def fft_checkerboard_multiple_depths(exp_no, sf_filter: str):
@@ -407,8 +425,8 @@ def fft_checkerboard_multiple_depths(exp_no, sf_filter: str):
     # netcdf file locations
     exp_input_file = f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp{exp_no}.nc"
     depths = np.loadtxt('/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/gyre_depths.txt', delimiter=',')
-    idx = np.round(np.linspace(0, len(depths) - 1, 4)).astype(int)
-    depths = depths[idx]
+    #idx = np.round(np.linspace(0, len(depths) - 1, 4)).astype(int)
+    #depths = depths[idx]
     # lon and lat for each grid
     lon, lat, time = read_file_info(exp_input_file)
     ny, nx = np.shape(lon)
@@ -461,4 +479,4 @@ if __name__ == '__main__':
     #fft_checkerboard_horizontal(31, 'No filter')#'5 iterations of filter')
     #fft_checkerboard_vertical(7, 'No filter')
     #rel_diff_fft(39, 40)
-    fft_checkerboard_multiple_depths(31, 'No filter')  # '5 iterations of filter')
+    fft_checkerboard_multiple_depths(40, 'No filter')  # '5 iterations of filter')

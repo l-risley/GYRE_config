@@ -57,7 +57,7 @@ def normalised_fft_freq(signal, signal_name):
 def contour_fft_lines(x, y, z, fft, plot_of: str, variable_name: str, line : str):
     # 2D contour plot of one variable
     # switch coords from m to km
-    plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-15000, vmax=15000)
+    plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')#, vmin=-15000, vmax=15000)
     # ax = sns.heatmap(z, cmap = 'ocean')
     plt.xlabel('Longitude ($^\circ$)')
     plt.ylabel('Lattitude ($^\circ$)')
@@ -475,8 +475,53 @@ def fft_checkerboard_multiple_depths(exp_no, sf_filter: str):
     normalised_fft_freq_depths(v_err_2, depths, '$v_{err}$ for line 2.')
     normalised_fft_freq_depths(v_err_3, depths, '$v_{err}$ at for line 3.')
     normalised_fft_freq_depths(v_err_4, depths, '$v_{err}$ at for line 4.')
+
+def fft_checkerboard_assim():
+    # input psi field
+    # netcdf file locations
+    exp_input_file = f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/assim_exps/unbal_increments_exp19.nc"
+
+    # lon and lat for each grid
+    lon, lat, time = read_file_info(exp_input_file)
+
+    # gyre12 outputs
+    v = read_file(exp_input_file, "bckinpsiunbal")[0]
+
+    # run ffft to identify the strength of the checkerboard effect
+    ny, nx = np.shape(v)
+
+    # the lattitudes
+    x_1_lat = np.int(np.floor(2 * ny / 9))
+    x_2_lat = np.int(np.floor(4 * ny / 9))
+    x_3_lat = np.int(np.floor(6 * ny / 9))
+    x_4_lat = np.int(np.floor(8 * ny / 9))
+    x_lat = [x_1_lat, x_2_lat, x_3_lat, x_4_lat]
+
+    ### FFT FOR STREAMFUNCTION ###
+    # take strips of x
+    x_1 = v[x_1_lat, :]
+    x_2 = v[x_2_lat, :]
+    x_3 = v[x_3_lat, :]
+    x_4 = v[x_4_lat, :]
+
+    # plot the field with the lines on top
+    contour_fft_lines(lon, lat, v, x_lat, f'Meridional velocity', 'u', 'horizontal')
+
+    # plot the FFT
+    normalised_fft_freq(x_1, f'v for line 1.')
+    x_1_fft = 2 * np.abs(rfft(x_1)) / len(x_1)
+    normalised_fft_freq(x_2, f'v for line 2.')
+    x_2_fft = 2 * np.abs(rfft(x_2)) / len(x_2)
+    normalised_fft_freq(x_3, f'v at for line 3.')
+    x_3_fft = 2 * np.abs(rfft(x_3)) / len(x_3)
+    normalised_fft_freq(x_4, f'v at for line 4.')
+    x_4_fft = 2 * np.abs(rfft(x_4)) / len(x_4)
+    print(x_1 - x_2)
+    print(x_3 - x_4)
+
 if __name__ == '__main__':
-    #fft_checkerboard_horizontal(31, 'No filter')#'5 iterations of filter')
+    fft_checkerboard_horizontal(31, 'No filter')#'5 iterations of filter')
     #fft_checkerboard_vertical(7, 'No filter')
     #rel_diff_fft(39, 40)
-    fft_checkerboard_multiple_depths(40, 'No filter')  # '5 iterations of filter')
+    #fft_checkerboard_multiple_depths(40, 'No filter')  # '5 iterations of filter')
+    #fft_checkerboard_assim()

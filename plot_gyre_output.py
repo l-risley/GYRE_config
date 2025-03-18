@@ -143,7 +143,7 @@ def plot_gyre36():
 def contour_gyre_inv(x, y, z, plot_of: str, variable_name: str, exp:str):
     # 2D contour_gyre plot of one variable
     # switch coords from m to km
-    plt.title(f'{plot_of} - Experiment {exp}')
+    plt.title(f'{plot_of}') #(- Experiment {exp}')
     if variable_name == 'SF' or variable_name == 'VP':
         units = '$m^2 s^{-1}$'
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-15000, vmax=15000)
@@ -152,7 +152,7 @@ def contour_gyre_inv(x, y, z, plot_of: str, variable_name: str, exp:str):
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1, vmax=1)
     else:
         units = '$ms^{-1}$'
-        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-0.002, vmax=0.002)
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-0.06, vmax=0.06)
     plt.xlabel('Longitude ($^\circ$)')
     plt.ylabel('Lattitude ($^\circ$)')
     plt.colorbar(label=f'{plot_of} ({units})')

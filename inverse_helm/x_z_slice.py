@@ -9,21 +9,22 @@ from read_nemo_fields import *
 from general_functions import *
 import matplotlib.colors as mcolors
 
-def contour_gyre_x_z(x, y, z, plot_of: str, variable_name: str, exp:str):
+def contour_gyre_x_z(x, y, z, plot_of: str, variable_name: str):
     # 2D contour_gyre plot of one variable
     # switch coords from m to km
     plt.title(f'{plot_of}') #(- Experiment {exp}')
     if variable_name == 'SF' or variable_name == 'VP':
         units = '$m^2 s^{-1}$'
-        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-15000, vmax=15000)
+        plt.pcolormesh(x, y, z, cmap='viridis', shading='auto')#, vmin=-15000, vmax=15000)
     elif variable_name == 'u_err' or variable_name == 'v_err':
-        units = None
+        units = '$ms^{-1}$'
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-1, vmax=1)
     else:
         units = '$ms^{-1}$'
         plt.pcolormesh(x, y, z, cmap='viridis', shading='auto', vmin=-0.06, vmax=0.06)
     plt.xlabel('Longitude ($^\circ$)')
-    plt.ylabel('Depth ($^\circ$)')
+    plt.ylabel('Depth (m)')
+    plt.gca().invert_yaxis()
     plt.colorbar(label=f'{plot_of} ({units})')
     #plt.savefig(f'f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/{variable_name}_{exp}.png')
     plt.show()
@@ -42,30 +43,33 @@ def plot_gyre_inverse_tests(exp):
 
     # lon and lat for each grid
     lon, lat, time = read_file_info(exp_input_file)
-    print(np.shape(lon))
+    ny, nx = np.shape(lon)
 
+    line = np.int(np.floor(8 * ny / 9))
     # gyre12 outputs
-    gyre12_u = read_file(exp_input_file, "u")
-    gyre12_v = read_file(exp_input_file, "v")[0]
-    gyre12_psi = read_file(exp_input_file, "psi")[0]
-    gyre12_chi = read_file(exp_input_file, "chi")[0]
-    gyre12_u_inv = read_file(exp_input_file, "u_inv")[0]
-    gyre12_v_inv = read_file(exp_input_file, "v_inv")[0]
-    gyre12_u_err = read_file(exp_input_file, "u_rel_err")[0]
-    gyre12_v_err = read_file(exp_input_file, "v_rel_err")[0]
+    u = read_file(exp_input_file, "u")[:, :,  line]
+    v = read_file(exp_input_file, "v")[:, :,  line]
+    psi = read_file(exp_input_file, "psi")[:, :,  line]
+    chi = read_file(exp_input_file, "chi")[:, :,  line]
+    u_recon = read_file(exp_input_file, "u_inv")[:, :,  line]
+    v_recon = read_file(exp_input_file, "v_inv")[:, :,  line]
+    u_rel_err = read_file(exp_input_file, "u_rel_err")[:, :,  line]
+    v_rel_err = read_file(exp_input_file, "v_rel_err")[:, :,  line]
 
+    print(np.shape(psi))
     # calculate the raw error
-    u_err = gyre12_u - gyre12_u_inv
-    v_err = gyre12_v - gyre12_v_inv
+    u_err = u - u_recon
+    v_err = v - v_recon
 
-    print(np.shape(gyre12_u))
-    print(gyre12_u[:, 1, 1])
+    depths = np.loadtxt(f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/gyre_depths.txt',delimiter=",")
 
-    v_input_file = f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/stats_u-di338_vomecrty.nc"
-    fileid = netCDF4.Dataset(v_input_file, mode='r')
-    depth = fileid.variables['depthv'][:]
-    fileid.close()
-    print(depth)
-    np.savetxt('/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/gyre_depths.txt', depth, delimiter=',')
+    #contour_gyre_x_z(lat[:, line], depths, psi, 'Streamfunction', 'SF')
+    #contour_gyre_x_z(lat[:, line], depths, u_err, 'Zonal velocity reconstruction error', 'u_err')
+    #contour_gyre_x_z(lat[:, line], depths, v_err, 'Meridional velocity reconstruction error', 'v_err')
+
+    contour_gyre_x_z(lat[:, line], depths, u_rel_err, 'Zonal velocity relative error', 'u_err')
+    contour_gyre_x_z(lat[:, line], depths, v_rel_err, 'Meridional velocity relative error', 'v_err')
+
+
 if __name__ == '__main__':
     plot_gyre_inverse_tests('39')

@@ -230,7 +230,6 @@ def save_rms_its():
 
 def comp_gyre_inverse_rms():
     """
-
     """
     info = np.loadtxt(f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/exps_mu_cc_rms_no7.txt',delimiter=",")
     exps = info[:, 0]
@@ -386,4 +385,22 @@ if __name__ == '__main__':
     #save_rms_its()
     #comp_gyre_inverse_rms()
     #save_rms_all_depths()
-    comp_gyre_inverse_rms_all_depths()
+    #comp_gyre_inverse_rms_all_depths()
+    """
+    exp_input_file = f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp39.nc"
+
+    # lon and lat for each grid
+    lon, lat, time = read_file_info(exp_input_file)
+
+    # gyre12 outputs
+    u = read_file(exp_input_file, "u")[0]
+    u_recon = read_file(exp_input_file, "u_inv")[0]
+    v = read_file(exp_input_file, "v")[0]
+    v_recon = read_file(exp_input_file, "v_inv")[0]
+
+    # calculate the raw error
+    u_err = u - u_recon
+    v_err = v - v_recon
+    u_rms, v_rms = calculate_rms_2d(u_err), calculate_rms_2d(v_err)
+    print(u_rms, v_rms)
+    """

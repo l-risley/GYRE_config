@@ -228,10 +228,70 @@ def save_rms_its():
 
     print("File saved as exps_mu_cc_rms.txt")
 
-def comp_gyre_inverse_rms():
+def save_rms_choose_depth(level):
+    info = np.loadtxt(
+        f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/exps_mu_cc.txt',
+        delimiter=",")
+    exps = info[:, 0]
+    mu_arr = info[:, 1]
+    cc_arr = info[:, 2]
+    u_rms_arr = np.empty_like(exps)
+    v_rms_arr = np.empty_like(exps)
+    its_arr = np.empty_like(exps)
+    # Ensure all arrays are of the same length
+    assert len(mu_arr) == len(cc_arr) == len(u_rms_arr) == len(v_rms_arr), "Arrays must be the same length"
+    idx = 0
+    for i in exps:
+        i = int(i)
+        exp_nc = f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp{i}.nc'
+        lon, lat, time = read_file_info(exp_nc)
+
+        u = read_file(exp_nc, "u")[level]
+        v = read_file(exp_nc, "v")[level]
+        psi = read_file(exp_nc, "psi")[level]
+        chi = read_file(exp_nc, "chi")[level]
+        u_inv = read_file(exp_nc, "u_inv")[level]
+        v_inv = read_file(exp_nc, "v_inv")[level]
+        u_rel_err = read_file(exp_nc, "u_rel_err")[level]
+        v_rel_err = read_file(exp_nc, "v_rel_err")[level]
+
+        # calculate the raw error
+        u_err = u - u_inv
+        v_err = v - v_inv
+
+        # RMS of raw-error
+        u_rms = calculate_rms_2d(u_err)
+        v_rms = calculate_rms_2d(v_err)
+
+        u_rms_arr[idx] = u_rms
+        v_rms_arr[idx] = v_rms
+
+        idx += 1
+
+    u_rms_col = u_rms_arr[:, np.newaxis]  # Convert to a column vector
+    v_rms_col = v_rms_arr[:, np.newaxis]  # Convert to a column vector
+    its_col = its_arr[:, np.newaxis]  # Convert to a column vector
+
+    # Ensure the `rms` vector has the same number of rows as `data`
+    if len(u_rms_col) != len(info):
+        raise ValueError("Length of `rms` vector must match the number of rows in the input file.")
+    if len(v_rms_col) != len(info):
+        raise ValueError("Length of `rms` vector must match the number of rows in the input file.")
+
+    # Concatenate the new column to the existing data
+    updated_data = np.hstack((info, u_rms_col))
+    updated_data_2 = np.hstack((updated_data, v_rms_col))
+    final_data = np.hstack((updated_data_2, its_col))
+
+    # Save the modified data to a new file
+    np.savetxt(f"exps_mu_cc_rms_level{level+1}.txt", final_data, delimiter=",", fmt="%0.7f")  # Adjust `fmt` as needed
+
+    print(f"File saved as exps_mu_cc_rms_level{level+1}.txt")
+
+def comp_gyre_inverse_rms(exp):
     """
     """
-    info = np.loadtxt(f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/exps_mu_cc_rms_no7.txt',delimiter=",")
+    info = np.loadtxt(f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/exps_mu_cc_rms_{exp}.txt',delimiter=",")
     exps = info[:, 0]
     mu_arr = info[:, 1]
     cc_arr = info[:, 2]
@@ -251,7 +311,7 @@ def comp_gyre_inverse_rms():
     ax1.set_xlabel('Regularisation parameter')
     ax1.set_ylabel(f'RMS')
     ax1.set_xscale('log')
-    ax1.legend(title = "Convergence criteria")
+    ax1.legend(title = "Accuracy tolerance")
     ax1.set_title(f'Zonal velocity ')
 
     for value in unique_cc:
@@ -262,7 +322,7 @@ def comp_gyre_inverse_rms():
     #ax2.set_ylabel(f'RMS')
     ax2.set_xscale('log')
     #ax2.yscale('log')
-    ax2.legend(title = "Convergence criteria")
+    ax2.legend(title = "Accuracy tolerance")
     ax2.set_title(f'Meridional velocity')
 
     fig.suptitle('RMS of the reconstructed velocity error')
@@ -292,7 +352,7 @@ def comp_gyre_inverse_rms():
     #plt.show()
 
 def save_rms_all_depths():
-    info = np.loadtxt('/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/exps_mu_cc.txt', delimiter=",")
+    info = np.loadtxt('/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/exps_mu_cc_notik3.txt', delimiter=",")
     depths = np.loadtxt('/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/gyre_depths.txt', delimiter=',')
     exps = info[:, 0]
     mu_arr = info[:, 1]
@@ -325,7 +385,8 @@ def save_rms_all_depths():
             v_rms_arr[idx] = v_rms_arr[idx] + v_rms
 
             idx += 1
-
+    u_rms_arr = u_rms_arr / len(depths)
+    v_rms_arr = v_rms_arr / len(depths)
     u_rms_col = u_rms_arr[:, np.newaxis]  # Convert to a column vector
     v_rms_col = v_rms_arr[:, np.newaxis]  # Convert to a column vector
 
@@ -339,9 +400,9 @@ def save_rms_all_depths():
     updated_data = np.hstack((info, u_rms_col))
     updated_data_2 = np.hstack((updated_data, v_rms_col))
     # Save the modified data to a new file
-    np.savetxt("exps_mu_cc_rms_depth_average.txt", updated_data_2, delimiter=",", fmt="%0.7f")  # Adjust `fmt` as needed
+    np.savetxt("exps_mu_cc_rms_depth_average_notik3.txt", updated_data_2, delimiter=",", fmt="%0.7f")  # Adjust `fmt` as needed
 
-    print("File saved as exps_mu_cc_rms_depth_average.txt")
+    print("File saved as exps_mu_cc_rms_depth_average_notik3.txt")
 
 def comp_gyre_inverse_rms_all_depths():
     """
@@ -364,7 +425,7 @@ def comp_gyre_inverse_rms_all_depths():
     ax1.set_xlabel('Regularisation parameter')
     ax1.set_ylabel(f'RMS')
     ax1.set_xscale('log')
-    ax1.legend(title = "Convergence criteria")
+    ax1.legend(title = "Accuracy tolerance")
     ax1.set_title(f'Zonal velocity ')
 
     for value in unique_cc:
@@ -375,19 +436,66 @@ def comp_gyre_inverse_rms_all_depths():
     #ax2.set_ylabel(f'RMS')
     ax2.set_xscale('log')
     #ax2.yscale('log')
-    ax2.legend(title = "Convergence criteria")
+    ax2.legend(title = "Accuracy tolerance")
     ax2.set_title(f'Meridional velocity')
 
     fig.suptitle('Averaged RMS of the reconstructed velocity error across all depths')
     plt.show()
+
+def plot_rms_filter_depths():
+    info = np.loadtxt(
+        '/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/exps_mu_cc_with_filter.txt',delimiter=",")
+    depths = np.loadtxt(
+        '/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/gyre_depths.txt',
+        delimiter=',')
+    exps = info[:, 0]
+    latex_exp = info[:, 3]
+    u_rms_arr = np.zeros_like(depths)
+    v_rms_arr = np.zeros_like(depths)
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, sharex=True, figsize=(10, 5))
+    for i, exp in enumerate(exps):
+        exp = int(exp)
+        exp_nc = f'/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp{exp}.nc'
+        for d in range(len(depths)):
+            u = read_file(exp_nc, "u")[d]
+            v = read_file(exp_nc, "v")[d]
+            u_inv = read_file(exp_nc, "u_inv")[d]
+            v_inv = read_file(exp_nc, "v_inv")[d]
+
+            # calculate the raw error
+            u_err = u - u_inv
+            v_err = v - v_inv
+
+            # RMS of raw-error
+            u_rms = calculate_rms_2d(u_err)
+            v_rms = calculate_rms_2d(v_err)
+
+            u_rms_arr[d] = u_rms
+            v_rms_arr[d] = v_rms
+        ax1.plot(u_rms_arr, depths, linestyle='-', label=f"{int(latex_exp[i])}")
+        ax2.plot(v_rms_arr, depths, linestyle='-', label=f"{int(latex_exp[i])}")
+    ax1.set_xlabel('RMS')
+    ax1.set_ylabel(f'Depth (m)')
+
+    ax1.legend(title="Experiment number")
+    ax1.set_title(f'Zonal velocity ')
+    ax1.invert_yaxis()
+    ax2.set_xlabel('Regularisation parameter')
+    ax2.legend(title="Experiment number")
+    ax2.set_title(f'Meridional velocity')
+
+    fig.suptitle('RMS of the reconstructed velocity for all depths')
+    plt.show()
+
 if __name__ == '__main__':
     #comp_gyre_inverse_tests('16', '20')
     #save_rms_its()
     #comp_gyre_inverse_rms()
     #save_rms_all_depths()
+    #comp_gyre_inverse_rms('notik3')
     #comp_gyre_inverse_rms_all_depths()
     """
-    exp_input_file = f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp39.nc"
+    exp_input_file = f"/Users/tk815965/OneDrive - University of Reading/Data_Assimilation/GYRE_config/inverse_helm/balance_vel_to_psichi_to_vel_exp40.nc"
 
     # lon and lat for each grid
     lon, lat, time = read_file_info(exp_input_file)
@@ -404,3 +512,6 @@ if __name__ == '__main__':
     u_rms, v_rms = calculate_rms_2d(u_err), calculate_rms_2d(v_err)
     print(u_rms, v_rms)
     """
+    plot_rms_filter_depths()
+    #save_rms_choose_depth(29)
+    #comp_gyre_inverse_rms(f'level30')
